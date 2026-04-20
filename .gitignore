@@ -1,0 +1,16 @@
+# Backend
+backend/target/
+backend/mysql-data/
+backend/*.log
+
+# Frontend
+frontend/node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.iml

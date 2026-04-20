@@ -24,7 +24,10 @@ const menuData = [
       },
       {
         name: "Inventories / Item Master",
-        children: [{ name: "Item Details", path: "/item-master" }]
+        children: [
+          { name: "Item Details", path: "/item-master" },
+          { name: "Cylinder Master", path: "/cylinder-master" }
+        ]
       },
       {
         name: "Rate Master",
