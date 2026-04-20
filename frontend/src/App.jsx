@@ -4,6 +4,8 @@ import Navbar from "./components/Navbar";
 import FinancialYearModal from "./components/FinancialYearModal";
 import Home from "./pages/Home";
 import CustomerLedger from "./pages/CustomerLedger";
+import SupplierLedger from "./pages/SupplierLedger";
+import CylinderMaster from "./pages/CylinderMaster";
 import LoginPage from "./pages/LoginPage";
 
 function App() {
@@ -57,7 +59,8 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/customer-ledger" element={<CustomerLedger />} />
-            <Route path="/supplier-ledger" element={<div className="p-8 bg-white shadow-sm rounded-xl m-4 text-gray-500">Supplier Ledger Page coming soon...</div>} />
+            <Route path="/supplier-ledger" element={<SupplierLedger />} />
+            <Route path="/cylinder-master" element={<CylinderMaster />} />
             <Route path="/item-master" element={<div className="p-8 bg-white shadow-sm rounded-xl m-4 text-gray-500">Item Master Page coming soon...</div>} />
             <Route path="/person-details" element={<div className="p-8 bg-white shadow-sm rounded-xl m-4 text-gray-500">Person Details Master coming soon...</div>} />
             <Route path="/rate-master" element={<div className="p-8 bg-white shadow-sm rounded-xl m-4 text-gray-500">Rate Master Page coming soon...</div>} />
