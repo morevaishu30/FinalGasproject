@@ -54,6 +54,21 @@ const CustomerLedger = () => {
   const [allLedgers, setAllLedgers] = useState([]);
   const [showList, setShowList] = useState(false);
   const [addressIndex, setAddressIndex] = useState(1); // 1 for Default, 2 for Secondary
+  const [itemGroupOptions, setItemGroupOptions] = useState([]);
+
+  useEffect(() => {
+    fetchLedgers();
+    fetchItemGroups();
+  }, []);
+
+  const fetchItemGroups = async () => {
+    try {
+      const response = await api.get('/item-groups');
+      setItemGroupOptions(response.data.map(g => g.name));
+    } catch (error) {
+      console.error("Error fetching item groups:", error);
+    }
+  };
 
   const [newContact, setNewContact] = useState({ personName: "", designation: "", mobile: "", email: "", emailType: "" });
 
@@ -763,10 +778,7 @@ const CustomerLedger = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {[
-                            "6 GRADE GAS", "ARGON", "AIR COMPRESSOR", "AIR CONDITION", 
-                            "AIR SAMPLING PUMP", "AMMONIA", "AMMONIA SHED", "BALL VALVE"
-                          ].map((item, idx) => (
+                          {itemGroupOptions.map((item, idx) => (
                             <tr key={idx} className={`hover:bg-blue-50 border-b border-gray-200 ${idx % 2 === 1 ? 'bg-blue-50/50' : ''}`}>
                               <td className="py-1.5 px-2 border-l border-r border-gray-300 flex items-center gap-2">
                                 <input 
