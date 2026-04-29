@@ -1,17 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import api from "../api/axios";
 
 const CylinderMaster = () => {
-  const [formData, setFormData] = useState({
+  const initialFormState = {
     cylinderOriginalNo: "", cylinderOwnership: "VADILAL CHEMICALS LTD - POR",
     mode: "Cylinder", customerPrefix: "", cylRotationNo: "",
     make: "", itemGrade: "HYDROGEN", cylinderType: "4.5 LTR W.C ALU CYLINDER",
     bodyType: "", wcType: "", capacity: "1.000", useIn: "Trd.",
-    importedCylinder: false, hydroTestDays: "1095", lastHdDate: "2026-04-09",
+    importedCylinder: false, hydroTestDays: "1095", lastHdDate: "",
     hdReminderDays: "30", cylinderStatus: "U-In Used", tareWeight: "0.000",
     
     // Purchase Details
-    pBillNo: "PV26/PM/00024", pBillDate: "2026-04-09",
-    pSupplierName: "", pEcrNo: "", pRate: "4900.00",
+    pBillNo: "", pBillDate: "",
+    pSupplierName: "", pEcrNo: "", pRate: "0.00",
     
     // Sales Details
     sBillNo: "", sBillDate: "", sCustomerName: "", sGdaNo: "", sRate: "0.00",
@@ -19,23 +20,122 @@ const CylinderMaster = () => {
     // SKID Details
     skidCylinderNoUse: "",
     skidReCheck: false, skidCheckDate: "", lastHeatDate: "", lastPaintDate: ""
-  });
+  };
+
+  const [formData, setFormData] = useState(initialFormState);
+  const [isEditing, setIsEditing] = useState(false);
+  const [allCylinders, setAllCylinders] = useState([]);
+  const [showList, setShowList] = useState(false);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData({ ...formData, [name]: type === "checkbox" ? checked : value });
   };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (isEditing && formData.id) {
+        await api.put(`/cylinders/${formData.id}`, formData);
+        alert("Cylinder Master updated successfully!");
+      } else {
+        await api.post("/cylinders", formData);
+        alert("Cylinder Master saved successfully!");
+      }
+      resetForm();
+    } catch (error) {
+      console.error("Error saving cylinder", error);
+      alert("Error saving data. Please check if backend is running.");
+    }
+  };
+
+  const fetchCylinders = async () => {
+    try {
+      const response = await api.get("/cylinders");
+      setAllCylinders(response.data);
+      setShowList(true);
+    } catch (error) {
+      console.error("Error fetching cylinders", error);
+      alert("Error fetching data.");
+    }
+  };
+
+  const handleEditSelect = (cylinder) => {
+    setFormData(cylinder);
+    setIsEditing(true);
+    setShowList(false);
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm("Are you sure you want to delete this cylinder?")) {
+      try {
+        await api.delete(`/cylinders/${id}`);
+        fetchCylinders();
+      } catch (error) {
+        console.error("Error deleting cylinder", error);
+      }
+    }
+  };
+
+  const resetForm = () => {
+    setFormData(initialFormState);
+    setIsEditing(false);
+  };
+
+  const handleExit = () => {
+    if (window.confirm("Are you sure you want to exit?")) {
+      window.location.href = "/";
+    }
+  };
+
   return (
     <div className="p-4 bg-gray-100 min-h-screen font-sans text-xs">
+      
+      {/* Modal List View */}
+      {showList && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded shadow-2xl w-full max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
+            <div className="bg-blue-600 text-white px-4 py-2 flex justify-between items-center">
+              <h2 className="text-sm font-bold">Select Cylinder</h2>
+              <button onClick={() => setShowList(false)} className="text-white hover:text-gray-200">✖</button>
+            </div>
+            <div className="flex-1 overflow-auto p-2">
+              <table className="w-full border-collapse">
+                <thead className="bg-gray-100 sticky top-0">
+                  <tr>
+                    <th className="p-2 text-left border">Original No</th>
+                    <th className="p-2 text-left border">Ownership</th>
+                    <th className="p-2 text-left border">Grade</th>
+                    <th className="p-2 text-right border">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {allCylinders.map((c) => (
+                    <tr key={c.id} className="hover:bg-blue-50">
+                      <td className="p-2 border">{c.cylinderOriginalNo}</td>
+                      <td className="p-2 border">{c.cylinderOwnership}</td>
+                      <td className="p-2 border">{c.itemGrade}</td>
+                      <td className="p-2 border text-right space-x-2">
+                        <button onClick={() => handleEditSelect(c)} className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded border border-blue-300">Select</button>
+                        <button onClick={() => handleDelete(c.id)} className="bg-red-100 text-red-700 px-2 py-0.5 rounded border border-red-300">Delete</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white rounded shadow-md border border-gray-300 max-w-6xl mx-auto overflow-hidden">
         
         {/* Header */}
         <div className="bg-gray-200 px-4 py-2 border-b border-gray-300 flex items-center gap-2">
-            <span className="text-blue-800 font-bold">📋 Cylinder Master</span>
+            <span className="text-blue-800 font-bold">📋 Cylinder Master {isEditing ? "(Editing)" : ""}</span>
         </div>
 
-        <form className="p-4 grid grid-cols-12 gap-6">
+        <form onSubmit={handleSubmit} className="p-4 grid grid-cols-12 gap-6">
           
           {/* Left Column - Main Details (8 cols) */}
           <div className="col-span-8 space-y-2">
@@ -43,7 +143,7 @@ const CylinderMaster = () => {
             <div className="grid grid-cols-12 gap-2 items-center">
               <label className="col-span-3 text-right font-semibold">Cylinder Original No :</label>
               <div className="col-span-4">
-                <input name="cylinderOriginalNo" value={formData.cylinderOriginalNo} onChange={handleChange} className="w-full border border-gray-300 px-2 py-1 outline-none focus:border-blue-500" />
+                <input required name="cylinderOriginalNo" value={formData.cylinderOriginalNo} onChange={handleChange} className="w-full border border-gray-300 px-2 py-1 outline-none focus:border-blue-500" />
               </div>
               <div className="col-span-5 flex items-center justify-center gap-4">
                 <label className="flex items-center gap-1 cursor-pointer">
@@ -83,6 +183,8 @@ const CylinderMaster = () => {
               <div className="col-span-9">
                 <select name="make" value={formData.make} onChange={handleChange} className="w-full border border-gray-300 px-2 py-1 bg-white">
                   <option value="">-- Select Make --</option>
+                  <option value="ISI">ISI</option>
+                  <option value="IMPORTED">IMPORTED</option>
                 </select>
               </div>
             </div>
@@ -117,6 +219,8 @@ const CylinderMaster = () => {
               <div className="col-span-9">
                 <select name="bodyType" value={formData.bodyType} onChange={handleChange} className="w-full border border-gray-300 px-2 py-1 bg-white">
                   <option value=""></option>
+                  <option value="STEEL">STEEL</option>
+                  <option value="ALUMINIUM">ALUMINIUM</option>
                 </select>
               </div>
             </div>
@@ -268,15 +372,11 @@ const CylinderMaster = () => {
                 </div>
                 <div className="space-y-1">
                     <label className="block text-gray-600">Last Date Of Heat :</label>
-                    <select name="lastHeatDate" value={formData.lastHeatDate} onChange={handleChange} className="w-full border border-gray-300 px-2 py-1 outline-none bg-white">
-                        <option value=""></option>
-                    </select>
+                    <input type="date" name="lastHeatDate" value={formData.lastHeatDate} onChange={handleChange} className="w-full border border-gray-300 px-2 py-0.5 outline-none bg-white" />
                 </div>
                 <div className="space-y-1">
                     <label className="block text-gray-600">Last Date Of Paint :</label>
-                    <select name="lastPaintDate" value={formData.lastPaintDate} onChange={handleChange} className="w-full border border-gray-300 px-2 py-1 outline-none bg-white">
-                        <option value=""></option>
-                    </select>
+                    <input type="date" name="lastPaintDate" value={formData.lastPaintDate} onChange={handleChange} className="w-full border border-gray-300 px-2 py-0.5 outline-none bg-white" />
                 </div>
             </div>
 
@@ -285,16 +385,16 @@ const CylinderMaster = () => {
           {/* Buttons Footer */}
           <div className="col-span-12 mt-4 pt-4 border-t border-gray-200 flex justify-between items-center">
              <div className="flex gap-2">
-                <button type="button" className="bg-gray-100 hover:bg-gray-200 border border-gray-300 px-4 py-1 flex items-center gap-1 font-semibold rounded shadow-sm">
-                    <span className="text-green-600 text-lg">➕</span> ADD
+                <button type="submit" className="bg-gray-100 hover:bg-gray-200 border border-gray-300 px-4 py-1 flex items-center gap-1 font-semibold rounded shadow-sm">
+                    <span className="text-green-600 text-lg">➕</span> {isEditing ? "SAVE CHANGE" : "ADD"}
                 </button>
-                <button type="button" className="bg-gray-100 hover:bg-gray-200 border border-gray-300 px-4 py-1 flex items-center gap-1 font-semibold rounded shadow-sm">
-                    <span className="text-yellow-600 text-lg">✏️</span> EDIT
+                <button type="button" onClick={fetchCylinders} className="bg-gray-100 hover:bg-gray-200 border border-gray-300 px-4 py-1 flex items-center gap-1 font-semibold rounded shadow-sm">
+                    <span className="text-yellow-600 text-lg">✏️</span> EDIT / LIST
                 </button>
-                <button type="button" className="bg-gray-100 hover:bg-gray-200 border border-gray-300 px-4 py-1 flex items-center gap-1 font-semibold rounded shadow-sm">
-                    <span className="text-blue-600 text-lg">👁️</span> VIEW
+                <button type="button" onClick={resetForm} className="bg-gray-100 hover:bg-gray-200 border border-gray-300 px-4 py-1 flex items-center gap-1 font-semibold rounded shadow-sm">
+                    <span className="text-blue-600 text-lg">👁️</span> CLEAR
                 </button>
-                <button type="button" className="bg-red-50 hover:bg-red-100 border border-red-300 px-4 py-1 flex items-center gap-1 font-semibold text-red-700 rounded shadow-sm">
+                <button type="button" onClick={handleExit} className="bg-red-50 hover:bg-red-100 border border-red-300 px-4 py-1 flex items-center gap-1 font-semibold text-red-700 rounded shadow-sm">
                     <span className="text-red-500 text-lg">🏃</span> EXIT
                 </button>
              </div>
@@ -310,8 +410,8 @@ const CylinderMaster = () => {
         <div className="bg-[#1e293b] text-white p-1 text-[10px] flex justify-between items-center px-4">
             <div className="flex gap-4">
                 <span>User : HEMANT</span>
-                <span>Date : 13-04-2026</span>
-                <span>Time : 1:37 PM</span>
+                <span>Date : {new Date().toLocaleDateString()}</span>
+                <span>Time : {new Date().toLocaleTimeString()}</span>
             </div>
             <div className="flex gap-4">
                 <span>CAPS</span>

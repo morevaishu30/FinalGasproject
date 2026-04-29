@@ -22,4 +22,16 @@ public class ItemMasterController {
         master.setFinancialYearId(financialYear);
         return repository.save(master);
     }
+
+    @PutMapping("/{id}")
+    public ItemMaster update(@PathVariable Long id, @RequestBody ItemMaster master, @RequestHeader("X-Financial-Year") String financialYear) {
+        master.setId(id);
+        master.setFinancialYearId(financialYear);
+        return repository.save(master);
+    }
+
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable Long id) {
+        repository.deleteById(id);
+    }
 }

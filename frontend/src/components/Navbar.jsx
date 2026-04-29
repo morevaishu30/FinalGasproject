@@ -11,10 +11,7 @@ const menuData = [
   {
     name: "Master",
     children: [
-      {
-        name: "Person Detail Master",
-        children: [{ name: "Person Details", path: "/person-details" }]
-      },
+
       {
         name: "Account Book Master",
         children: [
@@ -25,14 +22,10 @@ const menuData = [
       {
         name: "Inventories / Item Master",
         children: [
-          { name: "Item Details", path: "/item-master" },
           { name: "Cylinder Master", path: "/cylinder-master" }
         ]
       },
-      {
-        name: "Rate Master",
-        children: [{ name: "Rates", path: "/rate-master" }]
-      }
+
     ]
   },
   {
@@ -63,12 +56,12 @@ const MenuItem = ({ item, onAction, mobile }) => {
   }
 
   return (
-    <div 
+    <div
       className={`relative group/item ${mobile ? 'border-b border-white/5' : ''}`}
       onMouseEnter={() => !mobile && setIsOpen(true)}
       onMouseLeave={() => !mobile && setIsOpen(false)}
     >
-      <button 
+      <button
         onClick={() => mobile && setIsOpen(!isOpen)}
         className={`flex items-center justify-between w-full font-medium ${mobile ? 'px-4 py-3 text-base text-white hover:bg-white/10' : 'px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700'} transition-colors`}
       >
@@ -95,7 +88,7 @@ const Navbar = ({ currentFY, onChangeFY, onLogout }) => {
             <Link to="/" className="flex-shrink-0 font-extrabold text-2xl tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-100 drop-shadow-md mr-10">
               GAS SYSTEM
             </Link>
-            
+
             <div className="hidden md:flex space-x-1">
               {menuData.map((menu, idx) => (
                 <div key={idx} className="relative group">
@@ -112,7 +105,7 @@ const Navbar = ({ currentFY, onChangeFY, onLogout }) => {
                       </div>
                     </>
                   ) : (
-                    <Link 
+                    <Link
                       to={menu.path}
                       className="px-4 py-2 rounded-lg text-sm font-semibold hover:bg-white/10 hover:shadow-inner transition-all duration-300 focus:outline-none block inline-flex"
                     >
@@ -136,7 +129,7 @@ const Navbar = ({ currentFY, onChangeFY, onLogout }) => {
 
           {/* Mobile menu button */}
           <div className="md:hidden flex items-center">
-            <button 
+            <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="inline-flex items-center justify-center p-2 rounded-md text-white hover:text-white hover:bg-white/10 focus:outline-none transition-colors"
             >
