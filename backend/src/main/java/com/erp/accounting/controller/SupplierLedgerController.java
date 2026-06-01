@@ -8,6 +8,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/supplier-ledgers")
+@CrossOrigin(origins = "*")
 public class SupplierLedgerController {
     
     private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(SupplierLedgerController.class);

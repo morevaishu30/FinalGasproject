@@ -1,23 +1,27 @@
 import React, { useState, useEffect } from "react";
 import api from "../api/axios";
+import AttachmentModal from "../components/AttachmentModal";
 
 const SupplierLedger = () => {
   const [activeTab, setActiveTab] = useState(1);
   const [formData, setFormData] = useState({
     supplierName: "", printName: "", accountType: "Purchase Party",
-    underGroup: "SUNDRY CREDITOR EXPENSE", alternateUnderGroup: "",
-    diaryName: "",
+    underGroup: "SUNDRY CREDITORS FOR GOODS",
     vehicleQa: false, qrCodePrint: false, inactiveAc: false, legalCase: false,
-    terms: "", termsDays: 0, creditLimit: 0.00, holdingQty: 0,
-    creditDays: 0, debitInterest: 0, creditInterest: 0,
+    creditDays: 0, holdingQty: 0,
     operatingType: "Bill To Bill Payment",
-    expType: "",
     
     // Address
     location: "DEFAULT ADDRESS", inactiveLocation: false, mobile: "",
-    phone: "", fax: "", email: "", website: "",
+    phone: "", email: "", website: "",
     address1: "", address2: "", address3: "", areaName: "",
     city: "INDORE", pincode: "", state: "MADHYA PRADESH",
+
+    // Secondary Address
+    secLocation: "SECONDARY ADDRESS", secInactiveLocation: false, secMobile: "",
+    secPhone: "", secEmail: "", secWebsite: "",
+    secAddress1: "", secAddress2: "", secAddress3: "", secAreaName: "",
+    secCity: "INDORE", secPincode: "", secState: "MADHYA PRADESH",
 
     // Registration
     pan: "", registrationType: "Registered", gstin: "", lutNo: "",
@@ -38,9 +42,8 @@ const SupplierLedger = () => {
     customerType: "BADDI", customerGrade: "", tradeType: "Local",
     testCertRemarks: "",
     
-    // Collections
+    // Collections for tables
     bankDetails: [],
-    branchKM: [],
     contacts: [],
     itemGroupDealings: [],
 
@@ -51,6 +54,23 @@ const SupplierLedger = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [allLedgers, setAllLedgers] = useState([]);
   const [showList, setShowList] = useState(false);
+  const [showAttachmentModal, setShowAttachmentModal] = useState(false);
+  const [addressIndex, setAddressIndex] = useState(1); // 1 for Default, 2 for Secondary
+  const [itemGroupOptions, setItemGroupOptions] = useState([]);
+
+  useEffect(() => {
+    fetchLedgers();
+    fetchItemGroups();
+  }, []);
+
+  const fetchItemGroups = async () => {
+    try {
+      const response = await api.get('/item-groups');
+      setItemGroupOptions(response.data.map(g => g.name));
+    } catch (error) {
+      console.error("Error fetching item groups:", error);
+    }
+  };
 
   const [newContact, setNewContact] = useState({ personName: "", designation: "", mobile: "", email: "", emailType: "" });
 
@@ -78,10 +98,21 @@ const SupplierLedger = () => {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData({
+    let newFormData = {
       ...formData,
       [name]: type === 'checkbox' ? checked : value
-    });
+    };
+
+    // Auto-update Under Group based on Account Type
+    if (name === "accountType") {
+      if (value === "Sales Party") {
+        newFormData.underGroup = "SUNDRY DEBTORS FOR GOODS";
+      } else if (value === "Purchase Party") {
+        newFormData.underGroup = "SUNDRY CREDITORS FOR GOODS";
+      }
+    }
+
+    setFormData(newFormData);
   };
 
   const handleSubmit = async (e) => {
@@ -131,17 +162,18 @@ const SupplierLedger = () => {
   const resetForm = () => {
     setFormData({
       supplierName: "", printName: "", accountType: "Purchase Party",
-      underGroup: "SUNDRY CREDITOR EXPENSE", alternateUnderGroup: "",
-      diaryName: "",
+      underGroup: "SUNDRY CREDITORS FOR GOODS",
       vehicleQa: false, qrCodePrint: false, inactiveAc: false, legalCase: false,
-      terms: "", termsDays: 0, creditLimit: 0.00, holdingQty: 0,
-      creditDays: 0, debitInterest: 0, creditInterest: 0,
+      creditDays: 0, holdingQty: 0,
       operatingType: "Bill To Bill Payment",
-      expType: "",
       location: "DEFAULT ADDRESS", inactiveLocation: false, mobile: "",
-      phone: "", fax: "", email: "", website: "",
+      phone: "", email: "", website: "",
       address1: "", address2: "", address3: "", areaName: "",
       city: "INDORE", pincode: "", state: "MADHYA PRADESH",
+      secLocation: "SECONDARY ADDRESS", secInactiveLocation: false, secMobile: "",
+      secPhone: "", secEmail: "", secWebsite: "",
+      secAddress1: "", secAddress2: "", secAddress3: "", secAreaName: "",
+      secCity: "INDORE", secPincode: "", secState: "MADHYA PRADESH",
       pan: "", registrationType: "Registered", gstin: "", lutNo: "",
       lutEffectDate: "", aadharNo: "", cinNo: "",
       customerCode: "", msmeNumber: "", category: "OTHER",
@@ -150,11 +182,12 @@ const SupplierLedger = () => {
       exemptionCertNo: "", showInLoadingReport: false,
       notCheckPrefixForEcr: false, customerCylinderPrefix: "", holdingDays: 0,
       tds: false, tdsType: "", tdsSource: "",
-      tds: false, tdsType: "", tdsSource: "",
       taxCode: "", partyGroup: "", sector: "DEWAS/NANDAKHEDA",
       customerType: "BADDI", customerGrade: "", tradeType: "Local",
       testCertRemarks: "",
-      bankDetails: [], branchKM: [], contacts: [], itemGroupDealings: [],
+      bankDetails: [],
+      contacts: [],
+      itemGroupDealings: [],
       financialYearId: localStorage.getItem("financialYear") || "2025-2026"
     });
     setIsEditing(false);
@@ -166,6 +199,15 @@ const SupplierLedger = () => {
     }
   };
 
+  const fileInputRef = React.useRef(null);
+  const handleAttachmentClick = () => {
+    if (!formData.id) {
+      alert("Please save this ledger first before adding attachments.");
+      return;
+    }
+    setShowAttachmentModal(true);
+  };
+
   const tabs = [
     { id: 1, name: "Accounting Detail" },
     { id: 2, name: "Address Detail" },
@@ -174,7 +216,15 @@ const SupplierLedger = () => {
   ];
 
   return (
-    <div className="p-4 sm:p-6 bg-gray-50 min-h-screen">
+    <div className="p-2 sm:p-4 bg-gray-50 min-h-screen text-[11px]">
+      
+      <AttachmentModal 
+        isOpen={showAttachmentModal} 
+        onClose={() => setShowAttachmentModal(false)} 
+        referenceType="SUPPLIER" 
+        referenceId={formData.id} 
+      />
+
       {/* Modal List View */}
       {showList && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -217,8 +267,8 @@ const SupplierLedger = () => {
       <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden max-w-6xl mx-auto">
 
         {/* Header Title */}
-        <div className="bg-gradient-to-r from-blue-700 to-blue-500 text-white px-6 py-3 flex justify-between items-center">
-          <h1 className="text-lg font-bold flex items-center">
+        <div className="bg-gradient-to-r from-blue-700 to-blue-500 text-white px-4 py-2 flex justify-between items-center">
+          <h1 className="text-sm font-bold flex items-center uppercase">
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
             Supplier Ledger A/c {isEditing ? "(Editing)" : ""}
           </h1>
@@ -259,21 +309,11 @@ const SupplierLedger = () => {
               <div className="md:col-span-6"></div>
 
               <label className="md:col-span-2 text-sm font-semibold text-gray-700 text-right">Under Group :</label>
-              <div className="md:col-span-7">
+              <div className="md:col-span-7 flex items-center gap-4">
                 <select name="underGroup" value={formData.underGroup} onChange={handleChange} className="w-full border border-blue-200 focus:border-blue-500 rounded px-3 py-1.5 text-sm outline-none bg-white">
-                  <option value="SUNDRY CREDITOR EXPENSE">SUNDRY CREDITOR EXPENSE</option>
                   <option value="SUNDRY CREDITORS FOR GOODS">SUNDRY CREDITORS FOR GOODS</option>
+                  <option value="SUNDRY DEBTORS FOR GOODS">SUNDRY DEBTORS FOR GOODS</option>
                 </select>
-              </div>
-              <div className="md:col-span-3"></div>
-
-              <label className="md:col-span-2 text-sm font-semibold text-gray-700 text-right">Alternate Under Group :</label>
-              <div className="md:col-span-5 flex items-center gap-4">
-                <select name="alternateUnderGroup" value={formData.alternateUnderGroup} onChange={handleChange} className="w-full border border-blue-200 focus:border-blue-500 rounded px-3 py-1.5 text-sm outline-none bg-white">
-                  <option value="">-- Select --</option>
-                </select>
-              </div>
-              <div className="md:col-span-5 flex items-center justify-end gap-4 pr-2">
                 <label className="flex items-center space-x-2 whitespace-nowrap text-sm text-red-600 font-medium">
                   <input type="checkbox" name="inactiveAc" checked={formData.inactiveAc} onChange={handleChange} className="rounded text-red-600 focus:ring-red-500 w-4 h-4" />
                   <span>Inactive A/c</span>
@@ -283,11 +323,8 @@ const SupplierLedger = () => {
                   <span>Legal Case</span>
                 </label>
               </div>
+              <div className="md:col-span-3"></div>
 
-              <label className="md:col-span-2 text-sm font-semibold text-gray-700 text-right">Diary Name :</label>
-              <div className="md:col-span-7">
-                <input name="diaryName" value={formData.diaryName} onChange={handleChange} className="w-full border border-blue-200 focus:border-blue-500 rounded px-3 py-1.5 text-sm outline-none transition-shadow focus:ring-2 focus:ring-blue-100 bg-white" />
-              </div>
               <div className="md:col-span-3"></div>
             </div>
           </div>
@@ -319,30 +356,11 @@ const SupplierLedger = () => {
                   <span className="absolute -top-3 left-4 bg-white px-2 text-xs font-bold text-blue-800">Credit Limit & Prefix</span>
 
                   <div className="grid grid-cols-12 gap-3 items-center mt-2">
-                    <label className="col-span-4 text-right text-sm text-gray-700">Terms :</label>
-                    <input name="terms" value={formData.terms} onChange={handleChange} className="col-span-8 border border-gray-300 rounded px-2 py-1 text-sm outline-none focus:border-blue-500" />
-
-                    <label className="col-span-4 text-right text-sm text-gray-700">Credit Limit :</label>
-                    <div className="col-span-8 flex gap-2 items-center">
-                      <input name="creditLimit" type="number" step="0.01" value={formData.creditLimit} onChange={handleChange} className="w-1/2 border border-blue-400 bg-blue-50 rounded px-2 py-1 text-sm outline-none focus:border-blue-500 text-right font-medium" />
-                      <label className="text-sm text-gray-700 whitespace-nowrap ml-2">Holding Qty :</label>
-                      <input name="holdingQty" type="number" value={formData.holdingQty} onChange={handleChange} className="w-1/3 border border-gray-300 rounded px-2 py-1 text-sm outline-none focus:border-blue-500 text-right" />
-                    </div>
-
                     <label className="col-span-4 text-right text-sm text-gray-700">Credit Days :</label>
                     <input name="creditDays" type="number" value={formData.creditDays} onChange={handleChange} className="col-span-3 border border-gray-300 rounded px-2 py-1 text-sm outline-none focus:border-blue-500 text-right" />
-                    <div className="col-span-5 flex items-center justify-end">
-                      <label className="text-sm text-gray-700 mr-2">Terms Days :</label>
-                      <input name="termsDays" type="number" value={formData.termsDays} onChange={handleChange} className="w-16 border border-gray-300 rounded px-2 py-1 text-sm outline-none focus:border-blue-500 text-right" />
-                    </div>
-
-                    <label className="col-span-4 text-right text-sm text-gray-700">Debit Interest % :</label>
-                    <input name="debitInterest" type="number" step="0.01" value={formData.debitInterest} onChange={handleChange} className="col-span-3 border border-gray-300 rounded px-2 py-1 text-sm outline-none focus:border-blue-500 text-right" />
-                    <div className="col-span-5"></div>
-
-                    <label className="col-span-4 text-right text-sm text-gray-700">Credit Interest % :</label>
-                    <input name="creditInterest" type="number" step="0.01" value={formData.creditInterest} onChange={handleChange} className="col-span-3 border border-gray-300 rounded px-2 py-1 text-sm outline-none focus:border-blue-500 text-right" />
-                    <div className="col-span-5"></div>
+                    
+                    <label className="col-span-2 text-right text-sm text-gray-700 ml-4">Holding Qty :</label>
+                    <input name="holdingQty" type="number" value={formData.holdingQty} onChange={handleChange} className="col-span-3 border border-gray-300 rounded px-2 py-1 text-sm outline-none focus:border-blue-500 text-right" />
                   </div>
                 </div>
 
@@ -351,100 +369,13 @@ const SupplierLedger = () => {
                   <span className="absolute -top-3 left-4 bg-white px-2 text-xs font-bold text-blue-800">Operating Type</span>
 
                   <div className="flex flex-col gap-3 mt-4 ml-4">
-                    <label className="flex items-center space-x-2 text-sm text-gray-700 cursor-pointer">
-                      <input type="radio" name="operatingType" value="Bill To Bill Payment" checked={formData.operatingType === "Bill To Bill Payment"} onChange={handleChange} className="text-blue-600 focus:ring-blue-500 w-4 h-4" />
+                    <label className="flex items-center space-x-2 text-sm text-gray-700">
+                      <input type="radio" name="operatingType" value="Bill To Bill Payment" checked={true} readOnly className="text-blue-600 focus:ring-blue-500 w-4 h-4" />
                       <span>Bill To Bill Payment</span>
                     </label>
-                    <div className="flex items-center gap-4">
-                      <label className="flex items-center space-x-2 text-sm text-gray-700 cursor-pointer">
-                        <input type="radio" name="operatingType" value="Balance Only" checked={formData.operatingType === "Balance Only"} onChange={handleChange} className="text-blue-600 focus:ring-blue-500 w-4 h-4" />
-                        <span>Balance Only</span>
-                      </label>
-                      <select className="border border-gray-300 rounded px-2 py-0.5 text-xs outline-none bg-white w-24 ml-4">
-                        <option>Out</option>
-                      </select>
-                    </div>
-
-                    <div className="flex items-center gap-2 mt-1">
-                      <label className="text-sm font-semibold text-gray-700">Exp.Type:</label>
-                      <select name="expType" value={formData.expType} onChange={handleChange} className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm outline-none bg-white">
-                        <option></option>
-                      </select>
-                    </div>
                   </div>
                 </div>
 
-
-                {/* Ledger Show In Company/Branch */}
-                <div className="border border-blue-200 rounded-lg pt-4 pb-1 px-1 relative mt-2 h-[220px] flex flex-col">
-                  <span className="absolute -top-3 left-4 bg-white px-2 text-xs font-bold text-blue-800 z-10">Ledger Show In Company/Branch</span>
-                  <div className="overflow-y-auto flex-1 border border-gray-300 mx-1 mb-1">
-                    <table className="w-full text-left text-[11px] border-collapse whitespace-nowrap">
-                      <thead className="bg-gray-100 sticky top-0 shadow-sm z-10">
-                        <tr>
-                          <th className="py-1 px-2 font-semibold text-gray-700 border-r border-b border-gray-300">Company Name</th>
-                          <th className="py-1 px-2 font-semibold text-gray-700 border-r border-b border-gray-300">Branch Name</th>
-                          <th className="py-1 px-2 font-semibold text-gray-700 border-b border-gray-300 text-center">K.M</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {[
-                          { co: "VADILAL CHEMICALS LIMITED", br: "BOMBAY" },
-                          { co: "VADILAL CHEMICALS LIMITED", br: "HO" },
-                          { co: "VADILAL GASES LIMITED", br: "HO" },
-                          { co: "VADILAL CHEMICALS LIMITED", br: "HYDERABAD" },
-                          { co: "VADILAL CHEMICALS LIMITED", br: "INDORE", km: "6.00" }
-                        ].map((item, idx) => {
-                          const val = `${item.co}|${item.br}|${item.km || ''}`;
-                          const isChecked = formData.branchKM.includes(val);
-                          return (
-                            <tr key={idx} className="hover:bg-blue-50">
-                              <td className="py-1 px-2 border-r border-b border-gray-200 flex items-center gap-1.5">
-                                <input 
-                                  type="checkbox" 
-                                  className="w-3 h-3 text-blue-600 rounded" 
-                                  checked={isChecked}
-                                  onChange={(e) => {
-                                    const newBranchKM = e.target.checked 
-                                      ? [...formData.branchKM, val]
-                                      : formData.branchKM.filter(i => i !== val);
-                                    setFormData({...formData, branchKM: newBranchKM});
-                                  }}
-                                />
-                                {item.co}
-                              </td>
-                              <td className="py-1 px-2 border-r border-b border-gray-200">{item.br}</td>
-                              <td className="py-1 px-2 border-b border-gray-200 text-right">{item.km}</td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                {/* Ledger Summary Posting */}
-                <div className="border border-blue-200 rounded-lg pt-4 pb-1 px-1 relative mt-2 h-[220px] flex flex-col">
-                  <span className="absolute -top-3 left-4 bg-white px-2 text-xs font-bold text-blue-800 z-10">Ledger Summary Posting</span>
-                  <div className="overflow-y-auto flex-1 border border-gray-300 mx-1 mb-1 bg-gray-50/50">
-                    <table className="w-full text-left text-[11px] border-collapse whitespace-nowrap">
-                      <thead className="bg-gray-100 sticky top-0 shadow-sm z-10">
-                        <tr>
-                          <th className="py-1 px-2 font-semibold text-gray-700 border-r border-b border-gray-300 w-1/2">Voucher Type</th>
-                          <th className="py-1 px-2 font-semibold text-gray-700 border-b border-gray-300 w-1/2">Posting Type</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {Array.from({ length: 6 }).map((_, i) => (
-                          <tr key={i} className="hover:bg-blue-50/50">
-                            <td className="py-3 px-2 border-r border-b border-gray-200"></td>
-                            <td className="py-3 px-2 border-b border-gray-200"></td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
 
               </div>
             )}
@@ -457,67 +388,152 @@ const SupplierLedger = () => {
                   <div className="grid grid-cols-12 gap-x-2 gap-y-2 items-center">
                     <label className="col-span-2 text-right text-xs font-semibold text-gray-700">Location :</label>
                     <div className="col-span-4">
-                      <select name="location" value={formData.location} onChange={handleChange} className="w-full border border-gray-300 rounded px-2 py-1 text-xs outline-none bg-white focus:border-blue-500">
-                        <option>DEFAULT ADDRESS</option>
+                      <select 
+                        name={addressIndex === 1 ? "location" : "secLocation"} 
+                        value={addressIndex === 1 ? formData.location : formData.secLocation} 
+                        onChange={handleChange} 
+                        className="w-full border border-gray-300 rounded px-2 py-1 text-xs outline-none bg-white focus:border-blue-500"
+                      >
+                        <option value={addressIndex === 1 ? "DEFAULT ADDRESS" : "SECONDARY ADDRESS"}>
+                          {addressIndex === 1 ? "DEFAULT ADDRESS" : "SECONDARY ADDRESS"}
+                        </option>
                       </select>
                     </div>
                     <div className="col-span-3 flex items-center justify-center">
                       <label className="flex items-center space-x-1 whitespace-nowrap text-xs text-gray-600">
-                        <input type="checkbox" name="inactiveLocation" checked={formData.inactiveLocation} onChange={handleChange} className="rounded border-gray-400 text-blue-600 focus:ring-blue-500 w-3 h-3" />
+                        <input 
+                          type="checkbox" 
+                          name={addressIndex === 1 ? "inactiveLocation" : "secInactiveLocation"} 
+                          checked={addressIndex === 1 ? formData.inactiveLocation : formData.secInactiveLocation} 
+                          onChange={handleChange} 
+                          className="rounded border-gray-400 text-blue-600 focus:ring-blue-500 w-3 h-3" 
+                        />
                         <span>Inactive Location</span>
                       </label>
                     </div>
                     <label className="col-span-1 text-right text-xs font-semibold text-gray-700">Mobile :</label>
-                    <input name="mobile" value={formData.mobile} onChange={handleChange} className="col-span-2 border border-gray-300 rounded px-2 py-1 text-xs outline-none focus:border-blue-500" />
+                    <input 
+                      name={addressIndex === 1 ? "mobile" : "secMobile"} 
+                      value={addressIndex === 1 ? formData.mobile : formData.secMobile} 
+                      onChange={handleChange} 
+                      className="col-span-2 border border-gray-300 rounded px-2 py-1 text-xs outline-none focus:border-blue-500" 
+                    />
 
                     <label className="col-span-2 text-right text-xs font-semibold text-gray-700">Phone No(s) :</label>
-                    <input name="phone" value={formData.phone} onChange={handleChange} className="col-span-6 border border-gray-300 rounded px-2 py-1 text-xs outline-none focus:border-blue-500" />
-                    <label className="col-span-1 text-right text-xs font-semibold text-gray-700">Fax :</label>
-                    <input name="fax" value={formData.fax} onChange={handleChange} className="col-span-3 border border-gray-300 rounded px-2 py-1 text-xs outline-none focus:border-blue-500" />
+                    <input 
+                      name={addressIndex === 1 ? "phone" : "secPhone"} 
+                      value={addressIndex === 1 ? formData.phone : formData.secPhone} 
+                      onChange={handleChange} 
+                      className="col-span-6 border border-gray-300 rounded px-2 py-1 text-xs outline-none focus:border-blue-500" 
+                    />
+                    <div className="col-span-4"></div>
 
                     <label className="col-span-2 text-right text-xs font-semibold text-gray-700">E-Mail :</label>
-                    <input name="email" value={formData.email} onChange={handleChange} className="col-span-10 border border-gray-300 rounded px-2 py-1 text-xs outline-none focus:border-blue-500" />
+                    <input 
+                      name={addressIndex === 1 ? "email" : "secEmail"} 
+                      value={addressIndex === 1 ? formData.email : formData.secEmail} 
+                      onChange={handleChange} 
+                      className="col-span-10 border border-gray-300 rounded px-2 py-1 text-xs outline-none focus:border-blue-500" 
+                    />
 
                     <label className="col-span-2 text-right text-xs font-semibold text-gray-700">Website :</label>
-                    <input name="website" value={formData.website} onChange={handleChange} className="col-span-10 border border-gray-300 rounded px-2 py-1 text-xs outline-none focus:border-blue-500" />
+                    <input 
+                      name={addressIndex === 1 ? "website" : "secWebsite"} 
+                      value={addressIndex === 1 ? formData.website : formData.secWebsite} 
+                      onChange={handleChange} 
+                      className="col-span-10 border border-gray-300 rounded px-2 py-1 text-xs outline-none focus:border-blue-500" 
+                    />
 
                     <label className="col-span-2 text-right text-xs font-semibold text-gray-700 self-start mt-1.5">Address :</label>
                     <div className="col-span-10 flex flex-col gap-0.5">
-                      <input name="address1" value={formData.address1} onChange={handleChange} className="w-full border border-gray-300 rounded px-2 py-1 text-xs outline-none focus:border-blue-500" />
-                      <input name="address2" value={formData.address2} onChange={handleChange} className="w-full border border-gray-300 rounded px-2 py-1 text-xs outline-none focus:border-blue-500" />
-                      <input name="address3" value={formData.address3} onChange={handleChange} className="w-full border border-gray-300 rounded px-2 py-1 text-xs outline-none focus:border-blue-500" />
+                      <input 
+                        name={addressIndex === 1 ? "address1" : "secAddress1"} 
+                        value={addressIndex === 1 ? formData.address1 : formData.secAddress1} 
+                        onChange={handleChange} 
+                        className="w-full border border-gray-300 rounded px-2 py-1 text-xs outline-none focus:border-blue-500" 
+                      />
+                      <input 
+                        name={addressIndex === 1 ? "address2" : "secAddress2"} 
+                        value={addressIndex === 1 ? formData.address2 : formData.secAddress2} 
+                        onChange={handleChange} 
+                        className="w-full border border-gray-300 rounded px-2 py-1 text-xs outline-none focus:border-blue-500" 
+                      />
+                      <input 
+                        name={addressIndex === 1 ? "address3" : "secAddress3"} 
+                        value={addressIndex === 1 ? formData.address3 : formData.secAddress3} 
+                        onChange={handleChange} 
+                        className="w-full border border-gray-300 rounded px-2 py-1 text-xs outline-none focus:border-blue-500" 
+                      />
                     </div>
 
                     <label className="col-span-2 text-right text-xs font-semibold text-gray-700 mt-1">Area Name :</label>
                     <div className="col-span-10 mt-1">
-                      <select name="areaName" value={formData.areaName} onChange={handleChange} className="w-full border border-gray-300 rounded px-2 py-1 text-xs outline-none bg-white focus:border-blue-500">
-                        <option></option>
-                      </select>
+                      <input 
+                        name={addressIndex === 1 ? "areaName" : "secAreaName"} 
+                        value={addressIndex === 1 ? formData.areaName : formData.secAreaName} 
+                        onChange={handleChange} 
+                        className="w-full border border-gray-300 rounded px-2 py-1 text-xs outline-none focus:border-blue-500" 
+                      />
                     </div>
 
                     <label className="col-span-2 text-right text-xs font-semibold text-gray-700">City :</label>
                     <div className="col-span-6 flex gap-1">
-                      <select name="city" value={formData.city} onChange={handleChange} className="w-full border border-gray-300 rounded px-2 py-1 text-xs outline-none bg-white focus:border-blue-500">
-                        <option>INDORE</option>
-                      </select>
+                      <input 
+                        name={addressIndex === 1 ? "city" : "secCity"} 
+                        value={addressIndex === 1 ? formData.city : formData.secCity} 
+                        onChange={handleChange} 
+                        className="w-full border border-gray-300 rounded px-2 py-1 text-xs outline-none focus:border-blue-500"
+                      />
                     </div>
                     <label className="col-span-2 text-right text-xs font-semibold text-gray-700">Pincode :</label>
-                    <input name="pincode" value={formData.pincode} onChange={handleChange} className="col-span-2 border border-gray-300 rounded px-2 py-1 text-xs outline-none focus:border-blue-500" />
+                    <input 
+                      name={addressIndex === 1 ? "pincode" : "secPincode"} 
+                      value={addressIndex === 1 ? formData.pincode : formData.secPincode} 
+                      onChange={handleChange} 
+                      className="col-span-2 border border-gray-300 rounded px-2 py-1 text-xs outline-none focus:border-blue-500" 
+                    />
 
                     <label className="col-span-2 text-right text-xs font-semibold text-gray-700">State Name :</label>
                     <div className="col-span-6">
-                      <select name="state" value={formData.state} onChange={handleChange} className="w-full border border-gray-300 rounded px-2 py-1 text-xs outline-none bg-white focus:border-blue-500">
-                        <option>MADHYA PRADESH</option>
+                      <select 
+                        name={addressIndex === 1 ? "state" : "secState"} 
+                        value={addressIndex === 1 ? formData.state : formData.secState} 
+                        onChange={handleChange} 
+                        className="w-full border border-gray-300 rounded px-2 py-1 text-xs outline-none bg-white focus:border-blue-500"
+                      >
+                        <option value="">-- Select State --</option>
+                        {[
+                          "ANDHRA PRADESH", "ARUNACHAL PRADESH", "ASSAM", "BIHAR", "CHHATTISGARH", 
+                          "GOA", "GUJARAT", "HARYANA", "HIMACHAL PRADESH", "JHARKHAND", 
+                          "KARNATAKA", "KERALA", "MADHYA PRADESH", "MAHARASHTRA", "MANIPUR", 
+                          "MEGHALAYA", "MIZORAM", "NAGALAND", "ODISHA", "PUNJAB", 
+                          "RAJASTHAN", "SIKKIM", "TAMIL NADU", "TELANGANA", "TRIPURA", 
+                          "UTTAR PRADESH", "UTTARAKHAND", "WEST BENGAL", "ANDAMAN AND NICOBAR ISLANDS",
+                          "CHANDIGARH", "DADRA AND NAGAR HAVELI AND DAMAN AND DIU", "DELHI",
+                          "JAMMU AND KASHMIR", "LADAKH", "LAKSHADWEEP", "PUDUCHERRY"
+                        ].map(s => <option key={s} value={s}>{s}</option>)}
                       </select>
                     </div>
                     <div className="col-span-4 flex items-center justify-end gap-2 pr-2">
-                      <button type="button" className="p-0.5 border border-gray-300 bg-gray-100 hover:bg-gray-200 rounded text-xs px-2 shadow-sm"><span className="text-[10px]">◀</span></button>
-                      <span className="text-xs font-semibold text-gray-700">1 of 1</span>
-                      <button type="button" className="p-0.5 border border-gray-300 bg-gray-100 hover:bg-gray-200 rounded text-xs px-2 shadow-sm"><span className="text-[10px]">▶</span></button>
+                      <button 
+                        type="button" 
+                        onClick={() => setAddressIndex(1)}
+                        className={`p-0.5 border border-gray-300 rounded text-xs px-2 shadow-sm ${addressIndex === 1 ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
+                      >
+                        <span className="text-[10px]">◀</span>
+                      </button>
+                      <span className="text-xs font-semibold text-gray-700">{addressIndex} of 2</span>
+                      <button 
+                        type="button" 
+                        onClick={() => setAddressIndex(2)}
+                        className={`p-0.5 border border-gray-300 rounded text-xs px-2 shadow-sm ${addressIndex === 2 ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
+                      >
+                        <span className="text-[10px]">▶</span>
+                      </button>
                     </div>
                   </div>
 
-                  {/* Dynamic Contacts Sub-table */}
+                  {/* Sub-table for persons */}
                   <div className="mt-4 border border-blue-200 bg-white overflow-hidden">
                     <table className="w-full text-left text-[11px] border-collapse whitespace-nowrap">
                       <thead className="bg-gray-100 border-b border-blue-200">
@@ -705,7 +721,7 @@ const SupplierLedger = () => {
                   </div>
                 </div>
 
-                {/* Bank Sub-table */}
+                {/* Bank Sub-table - binding first row for simplicity */}
                 <div className="mt-2 border border-blue-300 bg-white overflow-hidden rounded">
                   <table className="w-full text-left text-[11px] border-collapse whitespace-nowrap">
                     <thead className="bg-[#e2e8f0] border-b border-blue-300">
@@ -781,10 +797,7 @@ const SupplierLedger = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {[
-                            "6 GRADE GAS", "ARGON", "AIR COMPRESSOR", "AIR CONDITION", 
-                            "AIR SAMPLING PUMP", "AMMONIA", "AMMONIA SHED", "BALL VALVE"
-                          ].map((item, idx) => (
+                          {itemGroupOptions.map((item, idx) => (
                             <tr key={idx} className={`hover:bg-blue-50 border-b border-gray-200 ${idx % 2 === 1 ? 'bg-blue-50/50' : ''}`}>
                               <td className="py-1.5 px-2 border-l border-r border-gray-300 flex items-center gap-2">
                                 <input 
@@ -823,8 +836,12 @@ const SupplierLedger = () => {
                 <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                 Edit / List
               </button>
-              <button type="button" onClick={resetForm} className="px-5 py-2 bg-gray-500 text-white rounded font-bold text-sm shadow hover:bg-gray-600 flex items-center">
+              <button type="button" onClick={fetchLedgers} className="px-5 py-2 bg-purple-600 text-white rounded font-bold text-sm shadow hover:bg-purple-700 flex items-center">
                 <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                View
+              </button>
+              <button type="button" onClick={resetForm} className="px-5 py-2 bg-gray-500 text-white rounded font-bold text-sm shadow hover:bg-gray-600 flex items-center">
+                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                 New / Clear
               </button>
               <button type="button" onClick={handleExit} className="px-5 py-2 bg-red-600 text-white rounded font-bold text-sm shadow hover:bg-red-700 flex items-center">
@@ -834,11 +851,8 @@ const SupplierLedger = () => {
             </div>
 
             <div className="flex space-x-2">
-              <button type="button" className="px-4 py-2 bg-yellow-500 text-white rounded font-bold text-sm shadow hover:bg-yellow-600 flex items-center">
+              <button type="button" onClick={handleAttachmentClick} className="px-4 py-2 bg-yellow-500 text-white rounded font-bold text-sm shadow hover:bg-yellow-600 flex items-center">
                 Attachment
-              </button>
-              <button type="button" className="px-4 py-2 bg-purple-600 text-white rounded font-bold text-sm shadow hover:bg-purple-700 flex items-center">
-                Authorization
               </button>
             </div>
           </div>

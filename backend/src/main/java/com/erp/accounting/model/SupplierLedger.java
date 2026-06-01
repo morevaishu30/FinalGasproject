@@ -20,8 +20,6 @@ public class SupplierLedger extends BaseEntity {
     private String printName;
     private String accountType;
     private String underGroup;
-    private String alternateUnderGroup;
-    private String diaryName;
     
     private Boolean vehicleQa;
     private Boolean qrCodePrint;
@@ -29,16 +27,9 @@ public class SupplierLedger extends BaseEntity {
     private Boolean legalCase;
 
     // Tab 1: Accounting Detail
-    private String terms;
-    private Integer termsDays;
-    private Double creditLimit;
     private Integer holdingQty;
     private Integer creditDays;
-    private Double debitInterest;
-    private Double creditInterest;
-    private String operatingType;
-
-    private String expType;
+    private String operatingType; // "Bill To Bill Payment" or "Balance Only"
 
     // Tab 2: Address Detail
     private String location;
@@ -52,9 +43,23 @@ public class SupplierLedger extends BaseEntity {
     private String areaName;
     private String mobile;
     private String phone;
-    private String fax;
     private String email;
     private String website;
+
+    // Secondary Address Fields
+    private String secLocation;
+    private Boolean secInactiveLocation;
+    private String secAddress1;
+    private String secAddress2;
+    private String secAddress3;
+    private String secCity;
+    private String secState;
+    private String secPincode;
+    private String secAreaName;
+    private String secMobile;
+    private String secPhone;
+    private String secEmail;
+    private String secWebsite;
 
     // Tab 3: Registration Detail
     private String gstin;
@@ -101,11 +106,18 @@ public class SupplierLedger extends BaseEntity {
 
     // Collections for tables in UI
     @jakarta.persistence.ElementCollection
-    private java.util.List<String> branchKM;
-
-    @jakarta.persistence.ElementCollection
     private java.util.List<ContactDetail> contacts = new java.util.ArrayList<>();
 
     @jakarta.persistence.ElementCollection
     private java.util.List<String> itemGroupDealings;
+
+    @jakarta.persistence.PrePersist
+    @jakarta.persistence.PreUpdate
+    public void validateUnderGroup() {
+        if ("Purchase Party".equals(this.accountType)) {
+            this.underGroup = "SUNDRY CREDITORS FOR GOODS";
+        } else if ("Sales Party".equals(this.accountType)) {
+            this.underGroup = "SUNDRY DEBTORS FOR GOODS";
+        }
+    }
 }

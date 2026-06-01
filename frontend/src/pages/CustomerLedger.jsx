@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import api from "../api/axios";
+import AttachmentModal from "../components/AttachmentModal";
 
 const CustomerLedger = () => {
   const [activeTab, setActiveTab] = useState(1);
@@ -53,7 +54,23 @@ const CustomerLedger = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [allLedgers, setAllLedgers] = useState([]);
   const [showList, setShowList] = useState(false);
+  const [showAttachmentModal, setShowAttachmentModal] = useState(false);
   const [addressIndex, setAddressIndex] = useState(1); // 1 for Default, 2 for Secondary
+  const [itemGroupOptions, setItemGroupOptions] = useState([]);
+
+  useEffect(() => {
+    fetchLedgers(false);
+    fetchItemGroups();
+  }, []);
+
+  const fetchItemGroups = async () => {
+    try {
+      const response = await api.get('/item-groups');
+      setItemGroupOptions(response.data.map(g => g.name));
+    } catch (error) {
+      console.error("Error fetching item groups:", error);
+    }
+  };
 
   const [newContact, setNewContact] = useState({ personName: "", designation: "", mobile: "", email: "", emailType: "" });
 
@@ -115,11 +132,13 @@ const CustomerLedger = () => {
     }
   };
 
-  const fetchLedgers = async () => {
+  const fetchLedgers = async (openModal = true) => {
     try {
       const response = await api.get("/customer-ledgers");
       setAllLedgers(response.data);
-      setShowList(true);
+      if (openModal !== false) {
+        setShowList(true);
+      }
     } catch (error) {
       console.error("Error fetching ledgers", error);
     }
@@ -182,6 +201,15 @@ const CustomerLedger = () => {
     }
   };
 
+  const fileInputRef = React.useRef(null);
+  const handleAttachmentClick = () => {
+    if (!formData.id) {
+      alert("Please save this ledger first before adding attachments.");
+      return;
+    }
+    setShowAttachmentModal(true);
+  };
+
   const tabs = [
     { id: 1, name: "Accounting Detail" },
     { id: 2, name: "Address Detail" },
@@ -190,7 +218,15 @@ const CustomerLedger = () => {
   ];
 
   return (
-    <div className="p-4 sm:p-6 bg-gray-50 min-h-screen">
+    <div className="p-2 sm:p-4 bg-gray-50 min-h-screen text-[11px]">
+      
+      <AttachmentModal 
+        isOpen={showAttachmentModal} 
+        onClose={() => setShowAttachmentModal(false)} 
+        referenceType="CUSTOMER" 
+        referenceId={formData.id} 
+      />
+
       {/* Modal List View */}
       {showList && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -233,8 +269,8 @@ const CustomerLedger = () => {
       <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden max-w-6xl mx-auto">
 
         {/* Header Title */}
-        <div className="bg-gradient-to-r from-blue-700 to-blue-500 text-white px-6 py-3 flex justify-between items-center">
-          <h1 className="text-lg font-bold flex items-center">
+        <div className="bg-gradient-to-r from-blue-700 to-blue-500 text-white px-4 py-2 flex justify-between items-center">
+          <h1 className="text-sm font-bold flex items-center uppercase">
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
             Customer Ledger A/c {isEditing ? "(Editing)" : ""}
           </h1>
@@ -245,9 +281,9 @@ const CustomerLedger = () => {
           <div className="p-6 bg-blue-50/30 border-b border-gray-200">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-y-3 gap-x-6 items-center">
 
-              <label className="md:col-span-2 text-sm font-semibold text-gray-700 text-right">Customer Name :</label>
+              <label className="md:col-span-2 text-[11px] font-semibold text-gray-700 text-right">Customer Name :</label>
               <div className="md:col-span-7">
-                <input name="customerName" value={formData.customerName} onChange={handleChange} className="w-full border border-blue-200 focus:border-blue-500 rounded px-3 py-1.5 text-sm outline-none transition-shadow focus:ring-2 focus:ring-blue-100 bg-white font-medium" />
+                <input name="customerName" value={formData.customerName} onChange={handleChange} className="w-full border border-blue-200 focus:border-blue-500 rounded px-3 py-1 text-[11px] outline-none transition-shadow focus:ring-2 focus:ring-blue-100 bg-white font-medium h-6" />
               </div>
               <div className="md:col-span-3"></div>
 
@@ -276,7 +312,7 @@ const CustomerLedger = () => {
 
               <label className="md:col-span-2 text-sm font-semibold text-gray-700 text-right">Under Group :</label>
               <div className="md:col-span-7 flex items-center gap-4">
-                <select name="underGroup" value={formData.underGroup} onChange={handleChange} className="w-full border border-blue-200 focus:border-blue-500 rounded px-3 py-1.5 text-sm outline-none bg-white">
+                <select name="underGroup" value={formData.underGroup} onChange={handleChange} disabled className="w-full border border-blue-200 focus:border-blue-500 rounded px-3 py-1.5 text-sm outline-none bg-gray-100 cursor-not-allowed">
                   <option value="SUNDRY DEBTORS FOR GOODS">SUNDRY DEBTORS FOR GOODS</option>
                   <option value="SUNDRY CREDITORS FOR GOODS">SUNDRY CREDITORS FOR GOODS</option>
                 </select>
@@ -763,10 +799,7 @@ const CustomerLedger = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {[
-                            "6 GRADE GAS", "ARGON", "AIR COMPRESSOR", "AIR CONDITION", 
-                            "AIR SAMPLING PUMP", "AMMONIA", "AMMONIA SHED", "BALL VALVE"
-                          ].map((item, idx) => (
+                          {itemGroupOptions.map((item, idx) => (
                             <tr key={idx} className={`hover:bg-blue-50 border-b border-gray-200 ${idx % 2 === 1 ? 'bg-blue-50/50' : ''}`}>
                               <td className="py-1.5 px-2 border-l border-r border-gray-300 flex items-center gap-2">
                                 <input 
@@ -805,8 +838,12 @@ const CustomerLedger = () => {
                 <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                 Edit / List
               </button>
-              <button type="button" onClick={resetForm} className="px-5 py-2 bg-gray-500 text-white rounded font-bold text-sm shadow hover:bg-gray-600 flex items-center">
+              <button type="button" onClick={fetchLedgers} className="px-5 py-2 bg-purple-600 text-white rounded font-bold text-sm shadow hover:bg-purple-700 flex items-center">
                 <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                View
+              </button>
+              <button type="button" onClick={resetForm} className="px-5 py-2 bg-gray-500 text-white rounded font-bold text-sm shadow hover:bg-gray-600 flex items-center">
+                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                 New / Clear
               </button>
               <button type="button" onClick={handleExit} className="px-5 py-2 bg-red-600 text-white rounded font-bold text-sm shadow hover:bg-red-700 flex items-center">
@@ -816,7 +853,7 @@ const CustomerLedger = () => {
             </div>
 
             <div className="flex space-x-2">
-              <button type="button" className="px-4 py-2 bg-yellow-500 text-white rounded font-bold text-sm shadow hover:bg-yellow-600 flex items-center">
+              <button type="button" onClick={handleAttachmentClick} className="px-4 py-2 bg-yellow-500 text-white rounded font-bold text-sm shadow hover:bg-yellow-600 flex items-center">
                 Attachment
               </button>
             </div>

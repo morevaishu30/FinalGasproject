@@ -22,7 +22,8 @@ const menuData = [
       {
         name: "Inventories / Item Master",
         children: [
-          { name: "Cylinder Master", path: "/cylinder-master" }
+          { name: "Cylinder Master", path: "/cylinder-master" },
+          { name: "Item Group Master", path: "/item-group" }
         ]
       },
 
@@ -30,7 +31,51 @@ const menuData = [
   },
   {
     name: "Transaction",
-    path: "/transaction"
+    children: [
+      {
+        name: "Inward Entry",
+        children: [
+          { name: "Material Inward (Cylinder) (Supplier) (FTM)", path: "/material-inward-supplier" },
+          { name: "Empty Cylinder Inward (ECR)", path: "/material-inward-ecr" },
+          { name: "Consumable Inward", path: "/consumable-inward" }
+        ]
+      },
+      {
+        name: "Outward Entry",
+        children: [
+          { name: "Material Outward", path: "/material-outward" },
+          { name: "Empty Cylinder Trans. (ETM)", path: "/empty-cylinder-etm" }
+        ]
+      },
+      {
+        name: "Production",
+        children: [
+          { name: "Production Entry", path: "/production-entry" }
+        ]
+      },
+      { name: "Hydro Testing / Test Certificate", path: "/hydro-testing" },
+      { name: "Sales Invoice", path: "/sales-invoice" },
+      { name: "Purchase", path: "/purchase" },
+      { name: "Credit Note", path: "/credit-note" },
+      { name: "Debit Note", path: "/debit-note" },
+      { name: "Journal Voucher", path: "/journal-voucher" },
+      { name: "Unapplied Adjustment Entry", path: "/unapplied-adjustment" },
+      { name: "Quotation", path: "/quotation" },
+      { name: "Quotation Comparison", path: "/quotation-comparison" },
+      {
+        name: "Purchase Order",
+        children: [
+          { name: "Cylinder (Supplier) PO", path: "/cylinder-po" }
+        ]
+      },
+      {
+        name: "Sales Order",
+        children: [
+          { name: "Cylinder Sales Order", path: "/sales-order" }
+        ]
+      },
+      { name: "Other Store", path: "/other-store" }
+    ]
   },
   {
     name: "Report",
@@ -85,7 +130,7 @@ const Navbar = ({ currentFY, onChangeFY, onLogout }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
-            <Link to="/" className="flex-shrink-0 font-extrabold text-2xl tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-100 drop-shadow-md mr-10">
+            <Link to="/" className="flex-shrink-0 font-extrabold text-xl tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-100 drop-shadow-md mr-10">
               GAS SYSTEM
             </Link>
 
@@ -94,11 +139,11 @@ const Navbar = ({ currentFY, onChangeFY, onLogout }) => {
                 <div key={idx} className="relative group">
                   {menu.children ? (
                     <>
-                      <button className="px-4 py-2 rounded-lg text-sm font-semibold hover:bg-white/10 hover:shadow-inner transition-all duration-300 focus:outline-none flex items-center">
+                      <button className="px-3 py-1.5 rounded-lg text-[13px] font-semibold hover:bg-white/10 hover:shadow-inner transition-all duration-300 focus:outline-none flex items-center">
                         {menu.name}
                         <svg className="w-4 h-4 ml-1 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                       </button>
-                      <div className="absolute left-0 mt-2 w-60 bg-white border border-gray-100 shadow-2xl rounded-xl z-40 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top -translate-y-2 group-hover:translate-y-0 py-1">
+                      <div className="absolute left-0 mt-1 w-56 bg-white border border-gray-100 shadow-2xl rounded-xl z-40 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top -translate-y-2 group-hover:translate-y-0 py-1">
                         {menu.children.map((child, cIdx) => (
                           <MenuItem key={cIdx} item={child} onAction={onChangeFY} mobile={false} />
                         ))}
@@ -107,7 +152,7 @@ const Navbar = ({ currentFY, onChangeFY, onLogout }) => {
                   ) : (
                     <Link
                       to={menu.path}
-                      className="px-4 py-2 rounded-lg text-sm font-semibold hover:bg-white/10 hover:shadow-inner transition-all duration-300 focus:outline-none block inline-flex"
+                      className="px-3 py-1.5 rounded-lg text-[13px] font-semibold hover:bg-white/10 hover:shadow-inner transition-all duration-300 focus:outline-none block inline-flex"
                     >
                       {menu.name}
                     </Link>

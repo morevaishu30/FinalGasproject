@@ -6,7 +6,17 @@ import Home from "./pages/Home";
 import CustomerLedger from "./pages/CustomerLedger";
 import SupplierLedger from "./pages/SupplierLedger";
 import CylinderMaster from "./pages/CylinderMaster";
+import ItemGroupMaster from "./pages/ItemGroupMaster";
 import LoginPage from "./pages/LoginPage";
+import MaterialInwardFTM from "./pages/MaterialInwardFTM";
+import MaterialInwardECR from "./pages/MaterialInwardECR";
+import CylinderSupplierPO from "./pages/CylinderSupplierPO";
+import MaterialOutward from "./pages/MaterialOutward";
+import SalesOrder from "./pages/SalesOrder";
+import MaterialPurchase from "./pages/MaterialPurchase";
+import SalesInvoice from "./pages/SalesInvoice";
+import MaterialOutwardETM from "./pages/MaterialOutwardETM";
+import ConsumableInward from "./pages/ConsumableInward";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(localStorage.getItem("isAuthenticated") === "true");
@@ -61,9 +71,19 @@ function App() {
             <Route path="/customer-ledger" element={<CustomerLedger />} />
             <Route path="/supplier-ledger" element={<SupplierLedger />} />
             <Route path="/cylinder-master" element={<CylinderMaster />} />
+            <Route path="/item-group" element={<ItemGroupMaster />} />
             <Route path="/item-master" element={<div className="p-8 bg-white shadow-sm rounded-xl m-4 text-gray-500">Item Master Page coming soon...</div>} />
             <Route path="/person-details" element={<div className="p-8 bg-white shadow-sm rounded-xl m-4 text-gray-500">Person Details Master coming soon...</div>} />
             <Route path="/rate-master" element={<div className="p-8 bg-white shadow-sm rounded-xl m-4 text-gray-500">Rate Master Page coming soon...</div>} />
+            <Route path="/material-inward-supplier" element={<MaterialInwardFTM />} />
+            <Route path="/material-inward-ecr" element={<MaterialInwardECR />} />
+            <Route path="/consumable-inward" element={<ConsumableInward />} />
+            <Route path="/material-outward" element={<MaterialOutward />} />
+            <Route path="/empty-cylinder-etm" element={<MaterialOutwardETM />} />
+            <Route path="/sales-order" element={<SalesOrder />} />
+            <Route path="/sales-invoice" element={<SalesInvoice />} />
+            <Route path="/purchase" element={<MaterialPurchase />} />
+            <Route path="/cylinder-po" element={<CylinderSupplierPO />} />
             {/* Catch-all route to redirect back to home */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

@@ -9,6 +9,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/customer-ledgers")
+@CrossOrigin(origins = "*")
 public class CustomerLedgerController {
 
     @Autowired

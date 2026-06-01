@@ -8,8 +8,12 @@
 }
 
 @layer base {
+  html {
+    font-size: 13px; /* Tailwind base scale */
+  }
   body {
-    @apply bg-erp-light text-erp-primary font-sans;
+    @apply bg-erp-light text-erp-primary font-sans text-[11px] antialiased;
+    line-height: 1.4;
   }
 }
 
