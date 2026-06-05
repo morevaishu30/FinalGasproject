@@ -12,6 +12,7 @@ const SalesInvoice = () => {
     customerName: '',
     customerLocation: 'DEFAULT ADDRESS',
     customerAddress: '',
+    customerGstNo: '',
     salesExecutive: '',
     remarks: '',
     drChallanNo: '',
@@ -47,6 +48,11 @@ const SalesInvoice = () => {
   );
 
   const [customerOptions, setCustomerOptions] = useState([]);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [invoicesList, setInvoicesList] = useState([]);
+  const [gdaEntries, setGdaEntries] = useState([]);
+  const [availableGda, setAvailableGda] = useState([]);
+  const [selectedGdaNo, setSelectedGdaNo] = useState('');
 
   useEffect(() => {
     fetchInitialData();
@@ -57,10 +63,13 @@ const SalesInvoice = () => {
       const res = await api.get('/customer-ledgers');
       setCustomerOptions(res.data.map(c => ({
           name: c.customerName,
-          address: c.billingAddress,
-          gstNo: c.gstNo
+          address: [c.address1, c.address2, c.address3].filter(Boolean).join(', '),
+          gstNo: c.gstin
       })));
       setFormData(prev => ({ ...prev, invoiceNo: 'POS23/TM/00062' }));
+      
+      const gdaRes = await api.get('/material-outward-gda');
+      setGdaEntries(gdaRes.data || []);
     } catch (error) {
       console.error("Error fetching initial data:", error);
     }
@@ -74,7 +83,15 @@ const SalesInvoice = () => {
         const selected = customerOptions.find(c => c.name === value);
         if (selected) {
             updatedData.customerAddress = selected.address || '';
+            updatedData.customerGstNo = selected.gstNo || '';
+        } else {
+            updatedData.customerAddress = '';
+            updatedData.customerGstNo = '';
         }
+        // Filter available GDAs matching selected customerName
+        const filteredGda = gdaEntries.filter(g => g.partyName === value);
+        setAvailableGda(filteredGda);
+        setSelectedGdaNo('');
     }
 
     if (name === 'crDays') {
@@ -84,6 +101,54 @@ const SalesInvoice = () => {
     }
 
     setFormData(updatedData);
+  };
+
+  const handleGdaSelect = (gdaNo) => {
+    setSelectedGdaNo(gdaNo);
+    if (!gdaNo) return;
+    const gda = availableGda.find(g => g.gdaNo === gdaNo);
+    if (gda) {
+        // Auto-populate invoice items from GDA items
+        const mappedItems = (gda.items || []).map((item) => ({
+            itemDescription: item.itemDescription || '',
+            unit: 'CUM',
+            partyCyl: 0,
+            ourCyl: item.qty || 0, // Assume our cylinder as default
+            capacity: item.capacity || 7.000,
+            qty: (item.capacity || 7.000) * (item.qty || 0),
+            ratePer: 'Qty',
+            rate: item.rate || 0,
+            amount: item.amount || 0,
+            remark: item.remark || '',
+            hsn: ''
+        }));
+        // Fill the rest of the 10 rows with empty rows for editability
+        while (mappedItems.length < 10) {
+            mappedItems.push({
+                itemDescription: '',
+                unit: 'CUM',
+                partyCyl: 0,
+                ourCyl: 0,
+                capacity: 7.000,
+                qty: 0,
+                ratePer: 'Qty',
+                rate: 0,
+                amount: 0,
+                remark: '',
+                hsn: ''
+            });
+        }
+        setItems(mappedItems);
+        setFormData(prev => {
+            const updated = {
+                ...prev,
+                drChallanNo: gda.gdaNo,
+                remarks: `Ref GDA: ${gda.gdaNo}`
+            };
+            calculateTotals(mappedItems, updated);
+            return updated;
+        });
+    }
   };
 
   const handleItemChange = (index, field, value) => {
@@ -147,13 +212,508 @@ const SalesInvoice = () => {
     }
 
     try {
-      await api.post('/api/sales-invoices', { ...formData, items: filteredItems });
+      await api.post('/sales-invoices', { ...formData, items: filteredItems });
       alert("Sales Invoice saved successfully!");
       window.location.reload();
     } catch (error) {
       console.error("Error saving Sales Invoice:", error);
       alert("Error saving data. Please check backend.");
     }
+  };
+
+  const handleOpenViewModal = async () => {
+    try {
+      const res = await api.get('/sales-invoices');
+      setInvoicesList(res.data);
+      setIsViewModalOpen(true);
+    } catch (error) {
+      console.error("Error fetching invoices list:", error);
+      alert("Error fetching invoices list from backend.");
+    }
+  };
+
+  const handleSelectInvoice = (invoice) => {
+    const selectedCustomer = customerOptions.find(c => c.name === invoice.customerName);
+    const gstNo = selectedCustomer ? selectedCustomer.gstNo : '';
+
+    setFormData({
+      salesAc: invoice.salesAc || 'SALES ACCOUNT - MATERIAL',
+      invoiceNo: invoice.invoiceNo || '',
+      invoiceDate: invoice.invoiceDate || '',
+      invoiceType: invoice.invoiceType || 'REGULAR',
+      taxType: invoice.taxType || 'GST LOCAL',
+      gstType: invoice.gstType || 'Sales Taxable',
+      customerName: invoice.customerName || '',
+      customerLocation: invoice.customerLocation || 'DEFAULT ADDRESS',
+      customerAddress: invoice.customerAddress || '',
+      customerGstNo: gstNo,
+      salesExecutive: invoice.salesExecutive || '',
+      remarks: invoice.remarks || '',
+      drChallanNo: invoice.drChallanNo || '',
+      crDays: invoice.crDays || 30,
+      dueDate: invoice.dueDate || '',
+      grossTotal: invoice.grossTotal || 0,
+      discount: invoice.discount || 0,
+      pf: invoice.pf || 0,
+      freight: invoice.freight || 0,
+      other: invoice.other || 0,
+      igst: invoice.igst || 0,
+      cgst: invoice.cgst || 0,
+      sgst: invoice.sgst || 0,
+      roundOff: invoice.roundOff || 0,
+      netTotal: invoice.netTotal || 0,
+      totalQty: invoice.totalQty || 0
+    });
+
+    const loadedItems = invoice.items || [];
+    const paddedItems = [...Array(10)].map((_, idx) => {
+      if (idx < loadedItems.length) {
+        return {
+          itemDescription: loadedItems[idx].itemDescription || '',
+          unit: loadedItems[idx].unit || 'CUM',
+          partyCyl: loadedItems[idx].partyCyl || 0,
+          ourCyl: loadedItems[idx].ourCyl || 0,
+          capacity: loadedItems[idx].capacity || 7.0,
+          qty: loadedItems[idx].qty || 0,
+          ratePer: loadedItems[idx].ratePer || 'Qty',
+          rate: loadedItems[idx].rate || 0,
+          amount: loadedItems[idx].amount || 0,
+          remark: loadedItems[idx].remark || '',
+          hsn: loadedItems[idx].hsn || ''
+        };
+      }
+      return {
+        itemDescription: '',
+        unit: 'CUM',
+        partyCyl: 0,
+        ourCyl: 0,
+        capacity: 7.0,
+        qty: 0,
+        ratePer: 'Qty',
+        rate: 0,
+        amount: 0,
+        remark: '',
+        hsn: ''
+      };
+    });
+    setItems(paddedItems);
+    setIsViewModalOpen(false);
+  };
+
+  const numberToWords = (amount) => {
+    const words = {
+      0: 'Zero', 1: 'One', 2: 'Two', 3: 'Three', 4: 'Four', 5: 'Five', 6: 'Six', 7: 'Seven', 8: 'Eight', 9: 'Nine',
+      10: 'Ten', 11: 'Eleven', 12: 'Twelve', 13: 'Thirteen', 14: 'Fourteen', 15: 'Fifteen', 16: 'Sixteen', 17: 'Seventeen', 18: 'Eighteen', 19: 'Nineteen',
+      20: 'Twenty', 30: 'Thirty', 40: 'Forty', 50: 'Fifty', 60: 'Sixty', 70: 'Seventy', 80: 'Eighty', 90: 'Ninety'
+    };
+
+    const convertLessThanOneThousand = (num) => {
+      let tempStr = '';
+      if (num >= 100) {
+        tempStr += words[Math.floor(num / 100)] + ' Hundred ';
+        num %= 100;
+      }
+      if (num > 0) {
+        if (tempStr !== '') tempStr += 'and ';
+        if (num < 20) {
+          tempStr += words[num] + ' ';
+        } else {
+          tempStr += words[Math.floor(num / 10) * 10] + ' ';
+          if (num % 10 > 0) {
+            tempStr += words[num % 10] + ' ';
+          }
+        }
+      }
+      return tempStr;
+    };
+
+    if (amount === 0) return 'Zero Rupees Only';
+
+    let value = Math.floor(amount);
+    let paise = Math.round((amount - value) * 100);
+
+    let result = '';
+
+    if (Math.floor(value / 10000000) > 0) {
+      result += convertLessThanOneThousand(Math.floor(value / 10000000)) + 'Crore ';
+      value %= 10000000;
+    }
+
+    if (Math.floor(value / 100000) > 0) {
+      result += convertLessThanOneThousand(Math.floor(value / 100000)) + 'Lakh ';
+      value %= 100000;
+    }
+
+    if (Math.floor(value / 1000) > 0) {
+      result += convertLessThanOneThousand(Math.floor(value / 1000)) + 'Thousand ';
+      value %= 1000;
+    }
+
+    if (value > 0) {
+      result += convertLessThanOneThousand(value);
+    }
+
+    result += 'Rupees ';
+
+    if (paise > 0) {
+      result += 'and ' + convertLessThanOneThousand(paise) + 'Paise ';
+    }
+
+    return result.trim() + ' Only';
+  };
+
+  const handlePrint = () => {
+    if (!formData.customerName) {
+      alert("Please select a customer first.");
+      return;
+    }
+
+    const filteredItems = items.filter(item => item.itemDescription);
+    if (filteredItems.length === 0) {
+      alert("Please add at least one item before printing.");
+      return;
+    }
+
+    const printWindow = window.open('', '_blank', 'width=800,height=900');
+    if (!printWindow) {
+      alert("Pop-up blocker is preventing print view. Please allow popups for this site.");
+      return;
+    }
+    
+    let rowsHtml = '';
+    const totalRowsCount = 12;
+    for (let i = 0; i < totalRowsCount; i++) {
+      if (i < filteredItems.length) {
+        const item = filteredItems[i];
+        rowsHtml += `
+          <tr class="item-row">
+            <td style="text-align: center; border-right: 1px solid black;">${i + 1}</td>
+            <td style="border-right: 1px solid black; padding-left: 8px;">${item.itemDescription}</td>
+            <td style="text-align: center; border-right: 1px solid black;">${item.hsn || '28044000'}</td>
+            <td style="text-align: right; border-right: 1px solid black; padding-right: 8px;">${parseFloat(item.qty).toFixed(2)}</td>
+            <td style="text-align: right; border-right: 1px solid black; padding-right: 8px;">${parseFloat(item.rate).toFixed(2)}</td>
+            <td style="text-align: right; padding-right: 8px;">${parseFloat(item.amount).toFixed(2)}</td>
+          </tr>
+        `;
+      } else {
+        rowsHtml += `
+          <tr class="item-row empty">
+            <td style="border-right: 1px solid black;">&nbsp;</td>
+            <td style="border-right: 1px solid black;">&nbsp;</td>
+            <td style="border-right: 1px solid black;">&nbsp;</td>
+            <td style="border-right: 1px solid black;">&nbsp;</td>
+            <td style="border-right: 1px solid black;">&nbsp;</td>
+            <td>&nbsp;</td>
+          </tr>
+        `;
+      }
+    }
+
+    const amtInWords = numberToWords(formData.netTotal);
+
+    const printContent = `
+      <html>
+      <head>
+        <title>Invoice Print - Shiv Shakti Industrial Gases</title>
+        <style>
+          @media print {
+            body { margin: 0; padding: 0; }
+            .no-print { display: none; }
+          }
+          body {
+            font-family: Arial, sans-serif;
+            margin: 15px;
+            color: #000;
+            background-color: #fff;
+            font-size: 11px;
+          }
+          .invoice-border {
+            border: 2px solid black;
+            width: 100%;
+            max-width: 750px;
+            margin: 0 auto;
+            box-sizing: border-box;
+          }
+          .tax-invoice-header {
+            text-align: center;
+            border-bottom: 1.5px solid black;
+            padding: 2px 0;
+            font-weight: bold;
+            font-size: 12px;
+            letter-spacing: 1px;
+          }
+          .company-header {
+            text-align: center;
+            border-bottom: 2px solid black;
+            padding: 8px 5px;
+            position: relative;
+          }
+          .company-logo-container {
+            position: absolute;
+            left: 15px;
+            top: 15px;
+          }
+          .company-logo {
+            font-size: 32px;
+            font-weight: bold;
+            border: 2px solid black;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            line-height: 50px;
+            text-align: center;
+            font-family: 'Times New Roman', Times, serif;
+          }
+          .company-name {
+            font-size: 20px;
+            font-weight: 800;
+            margin: 0;
+            font-family: 'Arial Black', Gadget, sans-serif;
+            letter-spacing: 0.5px;
+          }
+          .company-address {
+            margin: 3px 0 0 0;
+            font-size: 10px;
+            font-weight: bold;
+          }
+          .company-contact {
+            margin: 2px 0 0 0;
+            font-size: 10px;
+            font-weight: bold;
+          }
+          .company-gst {
+            margin: 2px 0 0 0;
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 0.5px;
+          }
+          .meta-table {
+            width: 100%;
+            border-collapse: collapse;
+            border-bottom: 2px solid black;
+          }
+          .meta-table td {
+            border: 1px solid black;
+            padding: 4px 6px;
+            vertical-align: top;
+          }
+          .customer-details {
+            width: 60%;
+          }
+          .invoice-meta {
+            width: 40%;
+          }
+          .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            border-bottom: 2px solid black;
+          }
+          .items-table th {
+            border: 1px solid black;
+            border-top: none;
+            padding: 6px 4px;
+            font-size: 10px;
+            font-weight: bold;
+            background-color: #f2f2f2;
+          }
+          .items-table td {
+            padding: 2px 4px;
+          }
+          .item-row {
+            height: 22px;
+          }
+          .item-row.empty {
+            height: 22px;
+          }
+          .vehicle-row {
+            border-bottom: 1.5px solid black;
+            height: 25px;
+            padding: 4px 8px;
+            font-weight: bold;
+            box-sizing: border-box;
+          }
+          .footer-section {
+            width: 100%;
+            border-collapse: collapse;
+          }
+          .footer-section td {
+            border: 1px solid black;
+            padding: 4px;
+            vertical-align: top;
+          }
+          .totals-table {
+            width: 100%;
+            border-collapse: collapse;
+          }
+          .totals-table td {
+            border: 1px solid black;
+            padding: 3px 6px;
+            font-size: 10px;
+          }
+          .grand-total-row {
+            font-weight: bold;
+            background-color: #f2f2f2;
+            font-size: 11px;
+          }
+          .signature-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            padding: 0 10px 5px 10px;
+          }
+          .signature-block {
+            text-align: center;
+            width: 180px;
+          }
+          .signature-line {
+            border-top: 1px dashed black;
+            margin-top: 35px;
+            padding-top: 3px;
+            font-weight: bold;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="no-print" style="text-align: center; margin-bottom: 10px;">
+          <button onclick="window.print();" style="padding: 6px 15px; font-weight: bold; background-color: #1e3a8a; color: white; border: none; border-radius: 4px; cursor: pointer;">Print Invoice</button>
+          <button onclick="window.close();" style="padding: 6px 15px; font-weight: bold; background-color: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; margin-left: 10px;">Close Window</button>
+        </div>
+
+        <div class="invoice-border">
+          <div class="tax-invoice-header">TAX INVOICE</div>
+          
+          <div class="company-header">
+            <div class="company-logo-container">
+              <div class="company-logo">Ś</div>
+            </div>
+            <div class="company-name">SHIV SHAKTI INDUSTRIAL GASES</div>
+            <div class="company-address">Add.: C/o. Sairaj Industries, Behind Pyramid Hotel, Bhosari-Alandi Road, Bhosari, Pune 411039</div>
+            <div class="company-contact">Email: shivshakti.indgases@gmail.com &nbsp;&nbsp; Mob: 7248984438 / 7219684439</div>
+            <div class="company-gst">GST No. : 27AFSFS7860R1ZL</div>
+          </div>
+
+          <table class="meta-table">
+            <tr>
+              <td class="customer-details">
+                <div style="font-weight: bold; margin-bottom: 5px;">M/s:</div>
+                <div style="font-size: 11px; line-height: 1.4; min-height: 50px;">
+                  <strong>${formData.customerName}</strong><br/>
+                  ${formData.customerAddress.replace(/\n/g, '<br/>')}
+                </div>
+                <div style="margin-top: 10px; font-weight: bold; font-size: 10px;">
+                  Customer GST No. : ${formData.customerGstNo || 'N/A'}
+                </div>
+              </td>
+              <td class="invoice-meta">
+                <table style="width: 100%; border-collapse: collapse;">
+                  <tr>
+                    <td style="border: none; padding: 2px 0; font-weight: bold; width: 45%;">Invoice No.</td>
+                    <td style="border: none; padding: 2px 0; width: 5%;">:</td>
+                    <td style="border: none; padding: 2px 0; font-weight: bold; font-size: 12px;">${formData.invoiceNo}</td>
+                  </tr>
+                  <tr>
+                    <td style="border: none; padding: 2px 0; font-weight: bold;">Dt.</td>
+                    <td style="border: none; padding: 2px 0;">:</td>
+                    <td style="border: none; padding: 2px 0;">${formData.invoiceDate}</td>
+                  </tr>
+                  <tr style="border-top: 1px solid #ccc;">
+                    <td style="border: none; padding: 2px 0; font-weight: bold;">Challan No.</td>
+                    <td style="border: none; padding: 2px 0;">:</td>
+                    <td style="border: none; padding: 2px 0;">${formData.drChallanNo || ''}</td>
+                  </tr>
+                  <tr>
+                    <td style="border: none; padding: 2px 0; font-weight: bold;">Dt.</td>
+                    <td style="border: none; padding: 2px 0;">:</td>
+                    <td style="border: none; padding: 2px 0;">${formData.invoiceDate}</td>
+                  </tr>
+                  <tr style="border-top: 1px solid #ccc;">
+                    <td style="border: none; padding: 2px 0; font-weight: bold;">P.O. No.</td>
+                    <td style="border: none; padding: 2px 0;">:</td>
+                    <td style="border: none; padding: 2px 0;">N/A</td>
+                  </tr>
+                  <tr>
+                    <td style="border: none; padding: 2px 0; font-weight: bold;">P.O. Date</td>
+                    <td style="border: none; padding: 2px 0;">:</td>
+                    <td style="border: none; padding: 2px 0;">N/A</td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th style="width: 7%; text-align: center;">Sr. No.</th>
+                <th style="width: 48%; text-align: left; padding-left: 8px;">Description of Goods</th>
+                <th style="width: 13%; text-align: center;">HSN Code</th>
+                <th style="width: 10%; text-align: right; padding-right: 8px;">Qty.</th>
+                <th style="width: 10%; text-align: right; padding-right: 8px;">Rate</th>
+                <th style="width: 12%; text-align: right; padding-right: 8px;">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+
+          <div class="vehicle-row">
+            Vehicle No. : ${formData.remarks && formData.remarks.toLowerCase().includes('vehicle') ? formData.remarks : ''}
+          </div>
+
+          <table class="footer-section">
+            <tr>
+              <td style="width: 60%; padding: 8px;">
+                <div style="font-weight: bold; margin-bottom: 8px;">Rupees in words:</div>
+                <div style="font-style: italic; font-size: 10px; line-height: 1.4; min-height: 35px;">
+                  ${amtInWords}
+                </div>
+                
+                <div class="signature-container">
+                  <div class="signature-block">
+                    <div class="signature-line" style="margin-top: 40px;">Receiver's Signature</div>
+                  </div>
+                </div>
+              </td>
+              <td style="width: 40%; padding: 0;">
+                <table class="totals-table">
+                  <tr>
+                    <td style="border-left: none; border-top: none; width: 60%;">Total</td>
+                    <td style="border-right: none; border-top: none; text-align: right; font-weight: bold;">${parseFloat(formData.grossTotal).toFixed(2)}</td>
+                  </tr>
+                  <tr>
+                    <td style="border-left: none;">CGST @ 9%</td>
+                    <td style="border-right: none; text-align: right;">${parseFloat(formData.cgst).toFixed(2)}</td>
+                  </tr>
+                  <tr>
+                    <td style="border-left: none;">SGST @ 9%</td>
+                    <td style="border-right: none; text-align: right;">${parseFloat(formData.sgst).toFixed(2)}</td>
+                  </tr>
+                  <tr>
+                    <td style="border-left: none;">IGST @ 18%</td>
+                    <td style="border-right: none; text-align: right;">${parseFloat(formData.igst).toFixed(2)}</td>
+                  </tr>
+                  <tr class="grand-total-row">
+                    <td style="border-left: none; border-bottom: none;">Grand Total</td>
+                    <td style="border-right: none; border-bottom: none; text-align: right;">${parseFloat(formData.netTotal).toFixed(2)}</td>
+                  </tr>
+                </table>
+                
+                <div style="text-align: center; margin-top: 10px; font-weight: bold; font-size: 9px; line-height: 1.3;">
+                  For SHIV SHAKTI INDUSTRIAL GASES<br/>
+                  <div style="height: 35px;"></div>
+                  Authorised Signatory
+                </div>
+              </td>
+            </tr>
+          </table>
+        </div>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(printContent);
+    printWindow.document.close();
   };
 
   return (
@@ -184,6 +744,17 @@ const SalesInvoice = () => {
               <select name="customerName" value={formData.customerName} onChange={handleInputChange} className="border border-gray-400 px-1 w-96 bg-white h-5 shadow-inner text-[10px]">
                 <option value="">-- Select Customer --</option>
                 {customerOptions.map((opt, i) => <option key={i} value={opt.name}>{opt.name}</option>)}
+              </select>
+            </div>
+            <div className="flex items-center">
+              <label className="w-24 text-right pr-2 text-blue-800">Link GDA No :</label>
+              <select value={selectedGdaNo} onChange={(e) => handleGdaSelect(e.target.value)} disabled={!formData.customerName} className="border border-gray-400 px-1 w-96 bg-white h-5 shadow-inner text-[10px] disabled:bg-gray-200">
+                <option value="">-- Select GDA to load items --</option>
+                {availableGda.map((g, i) => (
+                    <option key={i} value={g.gdaNo}>
+                        {g.gdaNo} ({g.entryDate}) - {g.items?.length || 0} items
+                    </option>
+                ))}
               </select>
             </div>
             <div className="flex items-center">
@@ -301,7 +872,7 @@ const SalesInvoice = () => {
                     <div className="flex justify-between font-bold text-gray-700"><span>Total Cyl:</span><span>{items.reduce((s,i) => s + (parseInt(i.ourCyl)||0) + (parseInt(i.partyCyl)||0), 0)}</span></div>
                 </div>
                 <div className="pl-2 space-y-1">
-                   <div className="text-red-700 font-bold uppercase">GST No: 27BIZPM6147D1ZK</div>
+                <div className="text-red-700 font-bold uppercase">GST No: {formData.customerGstNo || 'N/A'}</div>
                    <div className="text-gray-600">Type : <span className="font-bold">Registered</span></div>
                    <div className="text-green-700 font-bold">E-Invoice Generated !!</div>
                 </div>
@@ -344,11 +915,11 @@ const SalesInvoice = () => {
               <span className="text-red-700 font-bold text-sm">⟲</span>
               <span className="font-bold">REVERSE</span>
             </button>
-            <button className="px-4 py-1 border-r border-gray-400 flex items-center space-x-1 hover:bg-gray-300">
+            <button onClick={handleOpenViewModal} className="px-4 py-1 border-r border-gray-400 flex items-center space-x-1 hover:bg-gray-300">
               <span className="text-blue-800 font-bold text-sm">🔍</span>
               <span className="font-bold">VIEW</span>
             </button>
-            <button className="px-4 py-1 border-r border-gray-400 flex items-center space-x-1 hover:bg-gray-300">
+            <button onClick={handlePrint} className="px-4 py-1 border-r border-gray-400 flex items-center space-x-1 hover:bg-gray-300">
               <span className="text-blue-800 font-bold text-sm">🖨️</span>
               <span className="font-bold">PRINT</span>
             </button>
@@ -364,6 +935,69 @@ const SalesInvoice = () => {
         </div>
 
       </div>
+
+      {/* VIEW Modal */}
+      {isViewModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg border border-gray-400 shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden font-sans">
+            <div className="bg-[#1e3a8a] text-white px-4 py-2 flex justify-between items-center">
+              <h3 className="font-bold text-sm uppercase">🔍 Search / Select Sales Invoice</h3>
+              <button onClick={() => setIsViewModalOpen(false)} className="text-white hover:text-red-200 font-bold text-lg leading-none">×</button>
+            </div>
+            
+            <div className="p-4 overflow-y-auto flex-grow">
+              <table className="w-full border-collapse text-left text-xs">
+                <thead>
+                  <tr className="bg-gray-100 border-b border-gray-400 font-semibold text-gray-700">
+                    <th className="p-2 border border-gray-300">Invoice No.</th>
+                    <th className="p-2 border border-gray-300">Date</th>
+                    <th className="p-2 border border-gray-300">Customer Name</th>
+                    <th className="p-2 border border-gray-300">Sales Account</th>
+                    <th className="p-2 border border-gray-300 text-right">Gross Total</th>
+                    <th className="p-2 border border-gray-300 text-right">Net Total</th>
+                    <th className="p-2 border border-gray-300 text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {invoicesList.length === 0 ? (
+                    <tr>
+                      <td colSpan="7" className="p-4 text-center text-gray-500 italic">No invoices found in database.</td>
+                    </tr>
+                  ) : (
+                    invoicesList.map((inv) => (
+                      <tr key={inv.id} className="hover:bg-blue-50 border-b border-gray-200 text-gray-700">
+                        <td className="p-2 border border-gray-200 font-bold text-blue-900">{inv.invoiceNo}</td>
+                        <td className="p-2 border border-gray-200">{inv.invoiceDate}</td>
+                        <td className="p-2 border border-gray-200">{inv.customerName}</td>
+                        <td className="p-2 border border-gray-200">{inv.salesAc}</td>
+                        <td className="p-2 border border-gray-200 text-right">{(inv.grossTotal || 0).toFixed(2)}</td>
+                        <td className="p-2 border border-gray-200 text-right font-bold text-gray-900">{(inv.netTotal || 0).toFixed(2)}</td>
+                        <td className="p-2 border border-gray-200 text-center">
+                          <button 
+                            onClick={() => handleSelectInvoice(inv)} 
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-[10px] font-bold shadow-sm"
+                          >
+                            SELECT
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="bg-gray-100 px-4 py-2.5 border-t border-gray-300 flex justify-end">
+              <button 
+                onClick={() => setIsViewModalOpen(false)} 
+                className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-1.5 rounded text-[10px] font-bold shadow-sm"
+              >
+                CLOSE
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

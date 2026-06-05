@@ -46,6 +46,9 @@ const MaterialPurchase = () => {
   );
 
   const [supplierOptions, setSupplierOptions] = useState([]);
+  const [ftmEntries, setFtmEntries] = useState([]);
+  const [availableFtm, setAvailableFtm] = useState([]);
+  const [selectedFtmNo, setSelectedFtmNo] = useState('');
 
   useEffect(() => {
     fetchInitialData();
@@ -56,6 +59,9 @@ const MaterialPurchase = () => {
       const res = await api.get('/supplier-ledgers');
       setSupplierOptions(res.data.map(s => s.supplierName));
       setFormData(prev => ({ ...prev, entryNo: 'PUR/26/00156' }));
+
+      const ftmRes = await api.get('/material-inward-ftm');
+      setFtmEntries(ftmRes.data || []);
     } catch (error) {
       console.error("Error fetching initial data:", error);
     }
@@ -63,10 +69,69 @@ const MaterialPurchase = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => {
+      const updated = { ...prev, [name]: value };
+      if (name === 'supplierName') {
+        // Filter available FTMs matching selected supplierName
+        const filteredFtm = ftmEntries.filter(f => f.customerName === value);
+        setAvailableFtm(filteredFtm);
+        setSelectedFtmNo('');
+      }
+      return updated;
+    });
+  };
+
+  const handleFtmSelect = (entryNo) => {
+    setSelectedFtmNo(entryNo);
+    if (!entryNo) return;
+    const ftm = availableFtm.find(f => f.entryNo === entryNo);
+    if (ftm) {
+        // Auto-populate purchase items from FTM items
+        const mappedItems = (ftm.items || []).map((item) => {
+            const cap = parseFloat(item.capacity) || 7.000;
+            const cylCount = 1; // Each row in FTM is 1 cylinder
+            const qty = cap * cylCount;
+            return {
+                itemDescription: item.itemDescription || '',
+                unit: item.unit || 'CUM',
+                partyCyl: ftm.cylProperty !== 'O' ? 1 : 0,
+                ourCyl: ftm.cylProperty === 'O' ? 1 : 0,
+                capacity: cap,
+                qty: qty,
+                ratePer: 'Qty',
+                rate: 0,
+                amount: 0,
+                remark: item.cylinderNo ? `Cyl: ${item.cylinderNo}` : ''
+            };
+        });
+        while (mappedItems.length < 10) {
+            mappedItems.push({
+                itemDescription: '',
+                unit: 'CUM',
+                partyCyl: 0,
+                ourCyl: 0,
+                capacity: 7.000,
+                qty: 0,
+                ratePer: 'Qty',
+                rate: 0,
+                amount: 0,
+                remark: ''
+            });
+        }
+        setItems(mappedItems);
+        setFormData(prev => {
+            const updated = {
+                ...prev,
+                billNo: ftm.entryNo,
+                remarks: `Ref FTM: ${ftm.entryNo}`
+            };
+            // Recalculate totals
+            const gross = mappedItems.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
+            updated.grossTotal = gross;
+            updated.netTotal = gross;
+            return updated;
+        });
+    }
   };
 
   const handleItemChange = (index, field, value) => {
@@ -149,6 +214,17 @@ const MaterialPurchase = () => {
               <select name="supplierName" value={formData.supplierName} onChange={handleInputChange} className="border border-gray-400 px-1 w-96 bg-white h-5 shadow-inner text-[10px]">
                 <option value="">-- Select Supplier --</option>
                 {supplierOptions.map((name, i) => <option key={i} value={name}>{name}</option>)}
+              </select>
+            </div>
+            <div className="flex items-center">
+              <label className="w-24 text-right pr-2 text-blue-800">Link FTM No :</label>
+              <select value={selectedFtmNo} onChange={(e) => handleFtmSelect(e.target.value)} disabled={!formData.supplierName} className="border border-gray-400 px-1 w-96 bg-white h-5 shadow-inner text-[10px] disabled:bg-gray-200">
+                <option value="">-- Select FTM to load items --</option>
+                {availableFtm.map((f, i) => (
+                    <option key={i} value={f.entryNo}>
+                        {f.entryNo} ({f.entryDate}) - {f.items?.length || 0} items
+                    </option>
+                ))}
               </select>
             </div>
             <div className="flex items-center">
