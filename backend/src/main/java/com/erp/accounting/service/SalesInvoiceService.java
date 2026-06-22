@@ -28,4 +28,8 @@ public class SalesInvoiceService {
     public void delete(Long id) {
         repository.deleteById(id);
     }
+
+    public List<SalesInvoice> findOutstandingByCustomerName(String customerName) {
+        return repository.findOutstandingByCustomerName(customerName);
+    }
 }

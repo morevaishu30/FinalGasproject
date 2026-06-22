@@ -46,6 +46,14 @@ public class MaterialPurchase extends BaseEntity {
     private Double tcs;
     private Double netTotal;
 
+    @Column(nullable = false, columnDefinition = "DOUBLE PRECISION DEFAULT 0.0")
+    private Double paidAmount = 0.0;
+
+    @Transient
+    public Double getBalanceAmount() {
+        return (netTotal != null ? netTotal : 0.0) - (paidAmount != null ? paidAmount : 0.0);
+    }
+
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "material_purchase_id")
     private List<MaterialPurchaseItem> items = new ArrayList<>();

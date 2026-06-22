@@ -1,0 +1,46 @@
+export const VOUCHER_CONFIGS = {
+  'bank-receipt': {
+    title: 'Bank Receipt',
+    shortCode: 'BR',
+    bookModalTitle: 'Change Bank Receipt Book',
+    depositLabel: 'Deposit to',
+    showCheque: true,
+    books: [
+      'BANK OF BARODA - 07370200001460 (INR)',
+      'THE K.C.C.B. LTD - 04936000137',
+      'HDFC BANK - 50200012345678 (INR)',
+    ],
+    defaultBook: 'THE K.C.C.B. LTD - 04936000137',
+  },
+  'bank-payment': {
+    title: 'Bank Payment',
+    shortCode: 'BP',
+    bookModalTitle: 'Change Bank Payment Book',
+    depositLabel: 'Pay from',
+    showCheque: true,
+    books: [
+      'BANK OF BARODA - 07370200001460 (INR)',
+      'THE K.C.C.B. LTD - 04936000137',
+      'HDFC BANK - 50200012345678 (INR)',
+    ],
+    defaultBook: 'THE K.C.C.B. LTD - 04936000137',
+  },
+  'cash-receipt': {
+    title: 'Cash Receipt',
+    shortCode: 'CR',
+    bookModalTitle: 'Change Cash Receipt Book',
+    depositLabel: 'Receive in',
+    showCheque: false,
+    books: ['CASH BOOK - MAIN', 'CASH BOOK - BRANCH'],
+    defaultBook: 'CASH BOOK - MAIN',
+  },
+  'cash-payment': {
+    title: 'Cash Payment',
+    shortCode: 'CP',
+    bookModalTitle: 'Change Cash Payment Book',
+    depositLabel: 'Pay from',
+    showCheque: false,
+    books: ['CASH BOOK - MAIN', 'CASH BOOK - BRANCH'],
+    defaultBook: 'CASH BOOK - MAIN',
+  },
+};

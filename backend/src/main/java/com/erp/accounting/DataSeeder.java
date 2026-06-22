@@ -332,7 +332,7 @@ public class DataSeeder implements CommandLineRunner {
             sales.setCustomerName("M/s. Premier Gas Agency");
             sales.setCustomerLocation("DEFAULT ADDRESS");
             sales.setCustomerAddress("Plot No 45, MIDC Bhosari, Pune 411026");
-            sales.setDrChallanNo("CH-2991");
+            sales.setGdaNo("GDA26/00124");
             sales.setCrDays(30);
             sales.setDueDate(LocalDate.of(2026, 7, 4));
             sales.setGrossTotal(1050.0);

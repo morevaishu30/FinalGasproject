@@ -19,4 +19,7 @@ public class MaterialOutwardGDAItem {
     private Double rate;
     private Double amount;
     private String remark;
+    private String propotion;
+    private String itemGrade;
+    private String unit;
 }

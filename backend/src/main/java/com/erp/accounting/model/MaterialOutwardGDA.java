@@ -29,6 +29,17 @@ public class MaterialOutwardGDA extends BaseEntity {
     private String remark;
     private String book;
     private String salesAc;
+    
+    // Missing GDA fields from UI layout
+    private String packType;
+    private String gdaType;
+    private Integer noOfCaps;
+    private String modeOfTransport;
+    private String primaryVehicleRegNo;
+    private String lrNo;
+    private String reason;
+    private Boolean cylinderDetailFromQrCode;
+    private String cylProperty;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "material_outward_gda_id")

@@ -15,7 +15,9 @@ const SalesInvoice = () => {
     customerGstNo: '',
     salesExecutive: '',
     remarks: '',
-    drChallanNo: '',
+    gdaNo: '',
+    vehicleNo: '',
+    vendorCode: '',
     crDays: 30,
     dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     grossTotal: 0,
@@ -101,6 +103,10 @@ const SalesInvoice = () => {
     }
 
     setFormData(updatedData);
+    
+    if (['freight', 'discount', 'pf', 'other'].includes(name)) {
+        calculateTotals(items, updatedData);
+    }
   };
 
   const handleGdaSelect = (gdaNo) => {
@@ -142,7 +148,7 @@ const SalesInvoice = () => {
         setFormData(prev => {
             const updated = {
                 ...prev,
-                drChallanNo: gda.gdaNo,
+                gdaNo: gda.gdaNo,
                 remarks: `Ref GDA: ${gda.gdaNo}`
             };
             calculateTotals(mappedItems, updated);
@@ -177,16 +183,18 @@ const SalesInvoice = () => {
     const gross = currentItems.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
     const totalQty = currentItems.reduce((sum, item) => sum + (parseFloat(item.qty) || 0), 0);
     
+    const taxableAmount = gross + (parseFloat(currentFormData.freight) || 0);
+    
     // Simple tax calculation (e.g., 18% if GST Local)
     let igst = 0, cgst = 0, sgst = 0;
     if (currentFormData.taxType === 'GST LOCAL') {
-        cgst = gross * 0.09;
-        sgst = gross * 0.09;
+        cgst = taxableAmount * 0.09;
+        sgst = taxableAmount * 0.09;
     } else if (currentFormData.taxType === 'GST INTERSTATE') {
-        igst = gross * 0.18;
+        igst = taxableAmount * 0.18;
     }
 
-    const net = gross + igst + cgst + sgst + (parseFloat(currentFormData.freight) || 0) + (parseFloat(currentFormData.pf) || 0) + (parseFloat(currentFormData.other) || 0) - (parseFloat(currentFormData.discount) || 0);
+    const net = taxableAmount + igst + cgst + sgst + (parseFloat(currentFormData.pf) || 0) + (parseFloat(currentFormData.other) || 0) - (parseFloat(currentFormData.discount) || 0);
     
     setFormData(prev => ({
       ...prev,
@@ -249,7 +257,9 @@ const SalesInvoice = () => {
       customerGstNo: gstNo,
       salesExecutive: invoice.salesExecutive || '',
       remarks: invoice.remarks || '',
-      drChallanNo: invoice.drChallanNo || '',
+      gdaNo: invoice.gdaNo || '',
+      vehicleNo: invoice.vehicleNo || '',
+      vendorCode: invoice.vendorCode || '',
       crDays: invoice.crDays || 30,
       dueDate: invoice.dueDate || '',
       grossTotal: invoice.grossTotal || 0,
@@ -381,35 +391,42 @@ const SalesInvoice = () => {
     }
     
     let rowsHtml = '';
-    const totalRowsCount = 12;
+    const totalRowsCount = 10;
     for (let i = 0; i < totalRowsCount; i++) {
       if (i < filteredItems.length) {
         const item = filteredItems[i];
         rowsHtml += `
           <tr class="item-row">
-            <td style="text-align: center; border-right: 1px solid black;">${i + 1}</td>
-            <td style="border-right: 1px solid black; padding-left: 8px;">${item.itemDescription}</td>
-            <td style="text-align: center; border-right: 1px solid black;">${item.hsn || '28044000'}</td>
-            <td style="text-align: right; border-right: 1px solid black; padding-right: 8px;">${parseFloat(item.qty).toFixed(2)}</td>
-            <td style="text-align: right; border-right: 1px solid black; padding-right: 8px;">${parseFloat(item.rate).toFixed(2)}</td>
-            <td style="text-align: right; padding-right: 8px;">${parseFloat(item.amount).toFixed(2)}</td>
+            <td style="text-align: center; border: 1px solid #000; padding: 4px 2px;">${i + 1}</td>
+            <td style="border: 1px solid #000; padding: 4px 6px; text-align: left;">${item.itemDescription}</td>
+            <td style="text-align: center; border: 1px solid #000; padding: 4px 2px;">${item.hsn || '28044000'}</td>
+            <td style="text-align: center; border: 1px solid #000; padding: 4px 2px;">${item.unit || 'CUM'}</td>
+            <td style="text-align: right; border: 1px solid #000; padding: 4px 6px;">${parseFloat(item.qty).toFixed(2)}</td>
+            <td style="text-align: right; border: 1px solid #000; padding: 4px 6px;">${parseFloat(item.rate).toFixed(2)}</td>
+            <td style="text-align: right; border: 1px solid #000; padding: 4px 6px;">${parseFloat(item.amount).toFixed(2)}</td>
           </tr>
         `;
       } else {
         rowsHtml += `
           <tr class="item-row empty">
-            <td style="border-right: 1px solid black;">&nbsp;</td>
-            <td style="border-right: 1px solid black;">&nbsp;</td>
-            <td style="border-right: 1px solid black;">&nbsp;</td>
-            <td style="border-right: 1px solid black;">&nbsp;</td>
-            <td style="border-right: 1px solid black;">&nbsp;</td>
-            <td>&nbsp;</td>
+            <td style="border: 1px solid #000;">&nbsp;</td>
+            <td style="border: 1px solid #000;">&nbsp;</td>
+            <td style="border: 1px solid #000;">&nbsp;</td>
+            <td style="border: 1px solid #000;">&nbsp;</td>
+            <td style="border: 1px solid #000;">&nbsp;</td>
+            <td style="border: 1px solid #000;">&nbsp;</td>
+            <td style="border: 1px solid #000;">&nbsp;</td>
           </tr>
         `;
       }
     }
 
     const amtInWords = numberToWords(formData.netTotal);
+
+    const totalAmountBeforeTax = parseFloat(formData.grossTotal) + parseFloat(formData.freight || 0);
+    const totalAfterTax = totalAmountBeforeTax + parseFloat(formData.cgst) + parseFloat(formData.sgst) + parseFloat(formData.igst);
+    const roundedTotal = Math.round(totalAfterTax);
+    const roundOffDiff = (roundedTotal - totalAfterTax).toFixed(2);
 
     const printContent = `
       <html>
@@ -419,237 +436,314 @@ const SalesInvoice = () => {
           @media print {
             body { margin: 0; padding: 0; }
             .no-print { display: none; }
+            @page { margin: 8mm; }
           }
           body {
             font-family: Arial, sans-serif;
-            margin: 15px;
+            margin: 10px;
             color: #000;
             background-color: #fff;
             font-size: 11px;
           }
-          .invoice-border {
-            border: 2px solid black;
+          .invoice-container {
+            border: 2px solid #000;
             width: 100%;
-            max-width: 750px;
+            max-width: 780px;
             margin: 0 auto;
             box-sizing: border-box;
           }
-          .tax-invoice-header {
-            text-align: center;
-            border-bottom: 1.5px solid black;
-            padding: 2px 0;
-            font-weight: bold;
-            font-size: 12px;
-            letter-spacing: 1px;
-          }
+          /* Company Header */
           .company-header {
             text-align: center;
-            border-bottom: 2px solid black;
-            padding: 8px 5px;
+            padding: 10px 15px 8px 15px;
+            border-bottom: 2px solid #000;
             position: relative;
           }
-          .company-logo-container {
+          .company-header .logo-circle {
             position: absolute;
-            left: 15px;
-            top: 15px;
-          }
-          .company-logo {
-            font-size: 32px;
-            font-weight: bold;
-            border: 2px solid black;
+            left: 20px;
+            top: 12px;
+            width: 55px;
+            height: 55px;
+            border: 2px solid #000;
             border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            line-height: 50px;
-            text-align: center;
-            font-family: 'Times New Roman', Times, serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: bold;
+            font-family: 'Times New Roman', serif;
           }
-          .company-name {
+          .company-header .company-name {
             font-size: 20px;
-            font-weight: 800;
-            margin: 0;
+            font-weight: 900;
             font-family: 'Arial Black', Gadget, sans-serif;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
+            margin: 0;
           }
-          .company-address {
+          .company-header .regd-add {
+            font-size: 9px;
             margin: 3px 0 0 0;
-            font-size: 10px;
-            font-weight: bold;
+            line-height: 1.4;
           }
-          .company-contact {
+          .company-header .work-add {
+            font-size: 9px;
             margin: 2px 0 0 0;
-            font-size: 10px;
-            font-weight: bold;
+            line-height: 1.4;
           }
-          .company-gst {
+          .company-header .contact-line {
+            font-size: 9px;
+            font-weight: bold;
             margin: 2px 0 0 0;
+          }
+          .company-header .gstin-line {
             font-size: 11px;
             font-weight: 900;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
+            margin: 3px 0 0 0;
           }
-          .meta-table {
+
+          /* Tax Invoice Title */
+          .tax-invoice-title {
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+            letter-spacing: 2px;
+            padding: 4px 0;
+            border-bottom: 2px solid #000;
+            background-color: #f5f5f5;
+          }
+
+          /* Invoice Meta Grid */
+          .meta-grid {
             width: 100%;
             border-collapse: collapse;
-            border-bottom: 2px solid black;
+            border-bottom: 2px solid #000;
           }
-          .meta-table td {
-            border: 1px solid black;
-            padding: 4px 6px;
+          .meta-grid td {
+            border: 1px solid #000;
+            padding: 3px 6px;
+            font-size: 10px;
+            vertical-align: middle;
+          }
+          .meta-grid .label {
+            font-weight: bold;
+            white-space: nowrap;
+          }
+          .meta-grid .value {
+            min-width: 60px;
+          }
+
+          /* Bill To / Ship To */
+          .bill-ship-table {
+            width: 100%;
+            border-collapse: collapse;
+            border-bottom: 2px solid #000;
+          }
+          .bill-ship-table td {
+            border: 1px solid #000;
+            padding: 3px 6px;
+            font-size: 10px;
             vertical-align: top;
           }
-          .customer-details {
-            width: 60%;
+          .bill-ship-table .section-title {
+            font-weight: bold;
+            text-align: center;
+            background-color: #f5f5f5;
+            padding: 3px;
+            font-size: 11px;
           }
-          .invoice-meta {
-            width: 40%;
+          .bill-ship-table .field-label {
+            font-weight: bold;
+            width: 80px;
           }
+
+          /* Items Table */
           .items-table {
             width: 100%;
             border-collapse: collapse;
-            border-bottom: 2px solid black;
+            border-bottom: 2px solid #000;
           }
           .items-table th {
-            border: 1px solid black;
-            border-top: none;
-            padding: 6px 4px;
+            border: 1px solid #000;
+            padding: 5px 4px;
             font-size: 10px;
             font-weight: bold;
             background-color: #f2f2f2;
+            text-align: center;
           }
           .items-table td {
-            padding: 2px 4px;
-          }
-          .item-row {
-            height: 22px;
-          }
-          .item-row.empty {
-            height: 22px;
-          }
-          .vehicle-row {
-            border-bottom: 1.5px solid black;
-            height: 25px;
-            padding: 4px 8px;
-            font-weight: bold;
-            box-sizing: border-box;
-          }
-          .footer-section {
-            width: 100%;
-            border-collapse: collapse;
-          }
-          .footer-section td {
-            border: 1px solid black;
-            padding: 4px;
-            vertical-align: top;
-          }
-          .totals-table {
-            width: 100%;
-            border-collapse: collapse;
-          }
-          .totals-table td {
-            border: 1px solid black;
-            padding: 3px 6px;
+            padding: 3px 4px;
             font-size: 10px;
           }
-          .grand-total-row {
+          .item-row { height: 24px; }
+          .item-row.empty { height: 24px; }
+
+          /* Footer / Totals area */
+          .footer-wrapper {
+            width: 100%;
+            border-collapse: collapse;
+          }
+          .footer-wrapper td {
+            vertical-align: top;
+          }
+
+          .amount-words {
+            padding: 6px 8px;
+            border: 1px solid #000;
+            font-size: 10px;
+          }
+
+          .totals-right-table {
+            width: 100%;
+            border-collapse: collapse;
+          }
+          .totals-right-table td {
+            border: 1px solid #000;
+            padding: 3px 8px;
+            font-size: 10px;
+          }
+          .totals-right-table .total-label {
             font-weight: bold;
-            background-color: #f2f2f2;
-            font-size: 11px;
+            text-align: right;
+            width: 55%;
           }
-          .signature-container {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 30px;
-            padding: 0 10px 5px 10px;
+          .totals-right-table .total-value {
+            text-align: right;
+            font-weight: bold;
+            width: 45%;
           }
-          .signature-block {
+
+          .bank-details-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 0;
+          }
+          .bank-details-table td {
+            border: 1px solid #000;
+            padding: 3px 8px;
+            font-size: 10px;
+          }
+          .bank-details-table .bank-label {
+            font-weight: bold;
+            width: 110px;
+          }
+
+          .terms-section {
+            padding: 6px 8px;
+            border: 1px solid #000;
+            border-top: none;
+            font-size: 9px;
+            line-height: 1.5;
+          }
+          .terms-section .terms-title {
+            font-weight: bold;
+            text-decoration: underline;
+            margin-bottom: 3px;
+            font-size: 10px;
+          }
+
+          .signatory-section {
             text-align: center;
-            width: 180px;
+            padding: 8px;
+            border: 1px solid #000;
+            border-top: none;
+            font-size: 10px;
           }
-          .signature-line {
-            border-top: 1px dashed black;
-            margin-top: 35px;
-            padding-top: 3px;
-            font-weight: bold;
+
+          .cert-line {
+            text-align: center;
+            padding: 4px 8px;
+            font-size: 9px;
+            font-style: italic;
+            border: 1px solid #000;
+            border-top: none;
           }
         </style>
       </head>
       <body>
         <div class="no-print" style="text-align: center; margin-bottom: 10px;">
-          <button onclick="window.print();" style="padding: 6px 15px; font-weight: bold; background-color: #1e3a8a; color: white; border: none; border-radius: 4px; cursor: pointer;">Print Invoice</button>
-          <button onclick="window.close();" style="padding: 6px 15px; font-weight: bold; background-color: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; margin-left: 10px;">Close Window</button>
+          <button onclick="window.print();" style="padding: 8px 20px; font-weight: bold; background-color: #1e3a8a; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 13px;">🖨️ Print Invoice</button>
+          <button onclick="window.close();" style="padding: 8px 20px; font-weight: bold; background-color: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; margin-left: 10px; font-size: 13px;">✕ Close</button>
         </div>
 
-        <div class="invoice-border">
-          <div class="tax-invoice-header">TAX INVOICE</div>
+        <div class="invoice-container">
+          <!-- TAX INVOICE Title -->
+          <div style="text-align: center; font-weight: bold; font-size: 14px; letter-spacing: 1px; padding: 4px 0; border-bottom: 1px solid #000; background-color: #f5f5f5;">TAX INVOICE</div>
           
-          <div class="company-header">
-            <div class="company-logo-container">
-              <div class="company-logo">Ś</div>
-            </div>
-            <div class="company-name">SHIV SHAKTI INDUSTRIAL GASES</div>
-            <div class="company-address">Add.: C/o. Sairaj Industries, Behind Pyramid Hotel, Bhosari-Alandi Road, Bhosari, Pune 411039</div>
-            <div class="company-contact">Email: shivshakti.indgases@gmail.com &nbsp;&nbsp; Mob: 7248984438 / 7219684439</div>
-            <div class="company-gst">GST No. : 27AFSFS7860R1ZL</div>
+          <!-- Company Header -->
+          <div style="text-align: center; padding: 10px 15px 8px 15px; border-bottom: 2px solid #000;">
+            <div style="font-size: 22px; font-weight: 900; font-family: 'Arial Black', Gadget, sans-serif; letter-spacing: 1px; margin: 0; color: #0f172a;">SHIV SHAKTI INDUSTRIAL GASES</div>
+            <div style="font-size: 11px; margin: 4px 0 0 0; color: #3b82f6;">Add.: C/o. Sairaj Industries, Behind Pyramid Hotel, Bhosari-Alandi Road, Bhosari, Pune 411039</div>
+            <div style="font-size: 11px; margin: 2px 0 0 0; color: #3b82f6;">Email: shivshakti.indgases@gmail.com &nbsp;&nbsp; Mob: 7248984438 / 7219684439</div>
+            <div style="font-size: 12px; font-weight: bold; margin: 4px 0 0 0; letter-spacing: 1px; color: #0f172a;">GST No. : 27AFSFS7860R1ZL</div>
           </div>
 
-          <table class="meta-table">
+          <!-- Invoice Meta Details -->
+          <table class="meta-grid">
             <tr>
-              <td class="customer-details">
-                <div style="font-weight: bold; margin-bottom: 5px;">M/s:</div>
-                <div style="font-size: 11px; line-height: 1.4; min-height: 50px;">
-                  <strong>${formData.customerName}</strong><br/>
-                  ${formData.customerAddress.replace(/\n/g, '<br/>')}
-                </div>
-                <div style="margin-top: 10px; font-weight: bold; font-size: 10px;">
-                  Customer GST No. : ${formData.customerGstNo || 'N/A'}
-                </div>
-              </td>
-              <td class="invoice-meta">
+              <td class="label">Invoice No.</td>
+              <td class="value">${formData.invoiceNo}</td>
+              <td class="label">Vehicle No.</td>
+              <td class="value">${formData.vehicleNo || ''}</td>
+              <td class="label">P.O. No.</td>
+              <td class="value">N/A</td>
+            </tr>
+            <tr>
+              <td class="label">Invoice Date.</td>
+              <td class="value">${formData.invoiceDate}</td>
+              <td class="label">Vendor Code</td>
+              <td class="value">${formData.vendorCode || ''}</td>
+              <td class="label">P.O. Date</td>
+              <td class="value">N/A</td>
+            </tr>
+            <tr>
+              <td class="label">Challan No.</td>
+              <td class="value">${formData.gdaNo || ''}</td>
+              <td class="label">Date of supply</td>
+              <td class="value">${formData.invoiceDate}</td>
+              <td class="label">GDA no.</td>
+              <td class="value">${formData.gdaNo || ''}</td>
+            </tr>
+          </table>
+
+          <!-- Bill To / Ship To -->
+          <table class="bill-ship-table">
+            <tr>
+              <td class="section-title" style="width: 50%; border-bottom: 1px solid #000;">Bill To</td>
+              <td class="section-title" style="width: 50%; border-bottom: 1px solid #000;">Ship To</td>
+            </tr>
+            <tr>
+              <td style="padding: 4px 6px;">
                 <table style="width: 100%; border-collapse: collapse;">
-                  <tr>
-                    <td style="border: none; padding: 2px 0; font-weight: bold; width: 45%;">Invoice No.</td>
-                    <td style="border: none; padding: 2px 0; width: 5%;">:</td>
-                    <td style="border: none; padding: 2px 0; font-weight: bold; font-size: 12px;">${formData.invoiceNo}</td>
-                  </tr>
-                  <tr>
-                    <td style="border: none; padding: 2px 0; font-weight: bold;">Dt.</td>
-                    <td style="border: none; padding: 2px 0;">:</td>
-                    <td style="border: none; padding: 2px 0;">${formData.invoiceDate}</td>
-                  </tr>
-                  <tr style="border-top: 1px solid #ccc;">
-                    <td style="border: none; padding: 2px 0; font-weight: bold;">Challan No.</td>
-                    <td style="border: none; padding: 2px 0;">:</td>
-                    <td style="border: none; padding: 2px 0;">${formData.drChallanNo || ''}</td>
-                  </tr>
-                  <tr>
-                    <td style="border: none; padding: 2px 0; font-weight: bold;">Dt.</td>
-                    <td style="border: none; padding: 2px 0;">:</td>
-                    <td style="border: none; padding: 2px 0;">${formData.invoiceDate}</td>
-                  </tr>
-                  <tr style="border-top: 1px solid #ccc;">
-                    <td style="border: none; padding: 2px 0; font-weight: bold;">P.O. No.</td>
-                    <td style="border: none; padding: 2px 0;">:</td>
-                    <td style="border: none; padding: 2px 0;">N/A</td>
-                  </tr>
-                  <tr>
-                    <td style="border: none; padding: 2px 0; font-weight: bold;">P.O. Date</td>
-                    <td style="border: none; padding: 2px 0;">:</td>
-                    <td style="border: none; padding: 2px 0;">N/A</td>
-                  </tr>
+                  <tr><td class="field-label" style="border:none; padding: 2px 0;">Company Name :</td><td style="border:none; padding: 2px 0; font-weight: bold;">${formData.customerName}</td></tr>
+                  <tr><td class="field-label" style="border:none; padding: 2px 0;">Address:</td><td style="border:none; padding: 2px 0;">${formData.customerAddress.replace(/\n/g, '<br/>')}</td></tr>
+                  <tr><td class="field-label" style="border:none; padding: 2px 0;">GSTIN</td><td style="border:none; padding: 2px 0; font-weight: bold;">${formData.customerGstNo || 'N/A'}</td></tr>
+                  <tr><td class="field-label" style="border:none; padding: 2px 0;">State:</td><td style="border:none; padding: 2px 0;">Maharashtra</td></tr>
+                </table>
+              </td>
+              <td style="padding: 4px 6px;">
+                <table style="width: 100%; border-collapse: collapse;">
+                  <tr><td class="field-label" style="border:none; padding: 2px 0;">Company Name :</td><td style="border:none; padding: 2px 0; font-weight: bold;">${formData.customerName}</td></tr>
+                  <tr><td class="field-label" style="border:none; padding: 2px 0;">Address:</td><td style="border:none; padding: 2px 0;">${formData.customerAddress.replace(/\n/g, '<br/>')}</td></tr>
+                  <tr><td class="field-label" style="border:none; padding: 2px 0;">GSTIN</td><td style="border:none; padding: 2px 0; font-weight: bold;">${formData.customerGstNo || 'N/A'}</td></tr>
+                  <tr><td class="field-label" style="border:none; padding: 2px 0;">State:</td><td style="border:none; padding: 2px 0;">Maharashtra</td></tr>
                 </table>
               </td>
             </tr>
           </table>
 
+          <!-- Items Table -->
           <table class="items-table">
             <thead>
               <tr>
-                <th style="width: 7%; text-align: center;">Sr. No.</th>
-                <th style="width: 48%; text-align: left; padding-left: 8px;">Description of Goods</th>
-                <th style="width: 13%; text-align: center;">HSN Code</th>
-                <th style="width: 10%; text-align: right; padding-right: 8px;">Qty.</th>
-                <th style="width: 10%; text-align: right; padding-right: 8px;">Rate</th>
-                <th style="width: 12%; text-align: right; padding-right: 8px;">Amount</th>
+                <th style="width: 6%;">Sr.No.</th>
+                <th style="width: 36%; text-align: left; padding-left: 8px;">Product Description</th>
+                <th style="width: 12%;">HSN Code</th>
+                <th style="width: 8%;">UOM</th>
+                <th style="width: 12%;">Qty.</th>
+                <th style="width: 12%;">Rate</th>
+                <th style="width: 14%;">Amount</th>
               </tr>
             </thead>
             <tbody>
@@ -657,53 +751,101 @@ const SalesInvoice = () => {
             </tbody>
           </table>
 
-          <div class="vehicle-row">
-            Vehicle No. : ${formData.remarks && formData.remarks.toLowerCase().includes('vehicle') ? formData.remarks : ''}
-          </div>
-
-          <table class="footer-section">
+          <!-- Amount in Words + Totals side by side -->
+          <table class="footer-wrapper" style="width: 100%; border-collapse: collapse;">
             <tr>
-              <td style="width: 60%; padding: 8px;">
-                <div style="font-weight: bold; margin-bottom: 8px;">Rupees in words:</div>
-                <div style="font-style: italic; font-size: 10px; line-height: 1.4; min-height: 35px;">
-                  ${amtInWords}
+              <!-- Left: Amount in words -->
+              <td style="width: 50%; vertical-align: top;">
+                <div class="amount-words">
+                  <div style="font-weight: bold; margin-bottom: 4px; font-size: 11px;">In Words : ${amtInWords}</div>
                 </div>
-                
-                <div class="signature-container">
-                  <div class="signature-block">
-                    <div class="signature-line" style="margin-top: 40px;">Receiver's Signature</div>
-                  </div>
-                </div>
-              </td>
-              <td style="width: 40%; padding: 0;">
-                <table class="totals-table">
+
+                <!-- Bank Details -->
+                <table class="bank-details-table">
                   <tr>
-                    <td style="border-left: none; border-top: none; width: 60%;">Total</td>
-                    <td style="border-right: none; border-top: none; text-align: right; font-weight: bold;">${parseFloat(formData.grossTotal).toFixed(2)}</td>
+                    <td colspan="2" style="font-weight: bold; text-align: center; background-color: #f5f5f5; font-size: 11px;">Bank Details</td>
                   </tr>
                   <tr>
-                    <td style="border-left: none;">CGST @ 9%</td>
-                    <td style="border-right: none; text-align: right;">${parseFloat(formData.cgst).toFixed(2)}</td>
+                    <td class="bank-label">Bank Account :</td>
+                    <td style="font-weight: bold;">39520200003198</td>
                   </tr>
                   <tr>
-                    <td style="border-left: none;">SGST @ 9%</td>
-                    <td style="border-right: none; text-align: right;">${parseFloat(formData.sgst).toFixed(2)}</td>
+                    <td class="bank-label">Bank Name :</td>
+                    <td style="font-weight: bold;">Bank of Baroda</td>
                   </tr>
                   <tr>
-                    <td style="border-left: none;">IGST @ 18%</td>
-                    <td style="border-right: none; text-align: right;">${parseFloat(formData.igst).toFixed(2)}</td>
+                    <td class="bank-label">Bank IFSC :</td>
+                    <td style="font-weight: bold;">BARB0BHOSAR</td>
                   </tr>
-                  <tr class="grand-total-row">
-                    <td style="border-left: none; border-bottom: none;">Grand Total</td>
-                    <td style="border-right: none; border-bottom: none; text-align: right;">${parseFloat(formData.netTotal).toFixed(2)}</td>
+                  <tr>
+                    <td class="bank-label">Branch :</td>
+                    <td style="font-weight: bold;">Bhosari, Pune - 411039</td>
                   </tr>
                 </table>
-                
-                <div style="text-align: center; margin-top: 10px; font-weight: bold; font-size: 9px; line-height: 1.3;">
-                  For SHIV SHAKTI INDUSTRIAL GASES<br/>
-                  <div style="height: 35px;"></div>
-                  Authorised Signatory
+              </td>
+
+              <!-- Right: Totals -->
+              <td style="width: 50%; vertical-align: top;">
+                <table class="totals-right-table">
+                  <tr>
+                    <td class="total-label">Total Amount</td>
+                    <td class="total-value">${parseFloat(formData.grossTotal).toFixed(2)}</td>
+                  </tr>
+                  <tr>
+                    <td class="total-label">Freight</td>
+                    <td class="total-value">${parseFloat(formData.freight || 0).toFixed(2)}</td>
+                  </tr>
+                  <tr>
+                    <td class="total-label">Total Amount before tax</td>
+                    <td class="total-value">${totalAmountBeforeTax.toFixed(2)}</td>
+                  </tr>
+                  <tr>
+                    <td class="total-label">Add: CGST @ 9%</td>
+                    <td class="total-value">${parseFloat(formData.cgst).toFixed(2)}</td>
+                  </tr>
+                  <tr>
+                    <td class="total-label">Add: SGST @ 9%</td>
+                    <td class="total-value">${parseFloat(formData.sgst).toFixed(2)}</td>
+                  </tr>
+                  ${parseFloat(formData.igst) > 0 ? `
+                  <tr>
+                    <td class="total-label">Add: IGST @ 18%</td>
+                    <td class="total-value">${parseFloat(formData.igst).toFixed(2)}</td>
+                  </tr>
+                  ` : ''}
+                  <tr style="background-color: #f0f0f0;">
+                    <td class="total-label" style="font-size: 11px;">Total After Tax</td>
+                    <td class="total-value" style="font-size: 11px;">${totalAfterTax.toFixed(2)}</td>
+                  </tr>
+                  <tr>
+                    <td class="total-label">Round Off Amount</td>
+                    <td class="total-value" style="font-size: 12px; font-weight: 900; background-color: #f5f5f5;">${roundedTotal.toFixed(2)}</td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+
+          <!-- Certified line -->
+          <div class="cert-line">
+            Certified that the particulars given above are true and correct
+          </div>
+
+          <!-- Terms & Conditions + Signatory -->
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="width: 55%; vertical-align: top; border: 1px solid #000; padding: 6px 8px;">
+                <div style="font-weight: bold; text-decoration: underline; margin-bottom: 4px; font-size: 10px;">Terms & Conditions:</div>
+                <div style="font-size: 9px; line-height: 1.6;">
+                  1) Client will ensure to upload all invoices in GSTR on or before 5th of every month, if any query arises then both the parties will have some buffer time for rectifications if any<br/>
+                  2) Most IMP – Need to pay GST in time<br/>
+                  3) Payment terms - As per agreement
                 </div>
+              </td>
+              <td style="width: 45%; vertical-align: top; border: 1px solid #000; padding: 6px 8px; text-align: center;">
+                <div style="font-weight: bold; font-size: 10px;">For SHIV SHAKTI INDUSTRIAL GASES</div>
+                <div style="height: 55px;"></div>
+                <div style="font-weight: bold; font-size: 10px; border-top: 1px dashed #000; padding-top: 4px; display: inline-block; padding-left: 15px; padding-right: 15px;">Authorised Signatory</div>
               </td>
             </tr>
           </table>
@@ -779,8 +921,8 @@ const SalesInvoice = () => {
                 <option value="REGULAR">REGULAR</option>
                 <option value="EXPORT">EXPORT</option>
               </select>
-              <label className="w-24 text-right pr-2">D.R Challan No:</label>
-              <input type="text" name="drChallanNo" value={formData.drChallanNo} onChange={handleInputChange} className="border border-gray-400 px-1 w-32 bg-white h-5 shadow-inner" />
+              <label className="w-24 text-right pr-2">GDA no:</label>
+              <input type="text" name="gdaNo" value={formData.gdaNo} onChange={handleInputChange} className="border border-gray-400 px-1 w-32 bg-white h-5 shadow-inner" />
             </div>
             <div className="flex items-center">
               <label className="w-24 text-right pr-2">Tax Type :</label>
@@ -803,6 +945,12 @@ const SalesInvoice = () => {
             <div className="flex items-center">
                 <label className="w-24 text-right pr-2">Sales Executive:</label>
                 <input type="text" name="salesExecutive" value={formData.salesExecutive} onChange={handleInputChange} className="border border-gray-400 px-1 w-96 bg-white h-5 shadow-inner" />
+            </div>
+            <div className="flex items-center">
+                <label className="w-24 text-right pr-2">Vehicle No:</label>
+                <input type="text" name="vehicleNo" value={formData.vehicleNo} onChange={handleInputChange} className="border border-gray-400 px-1 w-32 bg-white h-5 shadow-inner" />
+                <label className="w-24 text-right pr-2">Vendor Code:</label>
+                <input type="text" name="vendorCode" value={formData.vendorCode} onChange={handleInputChange} className="border border-gray-400 px-1 w-32 bg-white h-5 shadow-inner" />
             </div>
             <div className="flex items-center">
                 <label className="w-24 text-right pr-2">Remarks :</label>

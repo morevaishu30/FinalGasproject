@@ -15,8 +15,12 @@ import MaterialOutward from "./pages/MaterialOutward";
 import SalesOrder from "./pages/SalesOrder";
 import MaterialPurchase from "./pages/MaterialPurchase";
 import SalesInvoice from "./pages/SalesInvoice";
+import PurchaseInvoice from "./pages/PurchaseInvoice";
 import MaterialOutwardETM from "./pages/MaterialOutwardETM";
 import ConsumableInward from "./pages/ConsumableInward";
+import VoucherTransaction from "./pages/VoucherTransaction";
+import StockReport from "./pages/StockReport";
+import CylinderHoldingReport from "./pages/CylinderHoldingReport";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(localStorage.getItem("isAuthenticated") === "true");
@@ -82,8 +86,15 @@ function App() {
             <Route path="/empty-cylinder-etm" element={<MaterialOutwardETM />} />
             <Route path="/sales-order" element={<SalesOrder />} />
             <Route path="/sales-invoice" element={<SalesInvoice />} />
+            <Route path="/purchase-invoice" element={<PurchaseInvoice />} />
             <Route path="/purchase" element={<MaterialPurchase />} />
             <Route path="/cylinder-po" element={<CylinderSupplierPO />} />
+            <Route path="/bank-receipt" element={<VoucherTransaction />} />
+            <Route path="/bank-payment" element={<VoucherTransaction />} />
+            <Route path="/cash-receipt" element={<VoucherTransaction />} />
+            <Route path="/cash-payment" element={<VoucherTransaction />} />
+            <Route path="/stock-report" element={<StockReport />} />
+            <Route path="/holding-report" element={<CylinderHoldingReport />} />
             {/* Catch-all route to redirect back to home */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

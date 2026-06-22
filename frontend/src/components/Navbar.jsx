@@ -32,6 +32,10 @@ const menuData = [
   {
     name: "Transaction",
     children: [
+      { name: "Bank Receipt", path: "/bank-receipt" },
+      { name: "Bank Payment", path: "/bank-payment" },
+      { name: "Cash Receipt", path: "/cash-receipt" },
+      { name: "Cash Payment", path: "/cash-payment" },
       {
         name: "Inward Entry",
         children: [
@@ -47,21 +51,9 @@ const menuData = [
           { name: "Empty Cylinder Trans. (ETM)", path: "/empty-cylinder-etm" }
         ]
       },
-      {
-        name: "Production",
-        children: [
-          { name: "Production Entry", path: "/production-entry" }
-        ]
-      },
-      { name: "Hydro Testing / Test Certificate", path: "/hydro-testing" },
       { name: "Sales Invoice", path: "/sales-invoice" },
+      { name: "Purchase Invoice", path: "/purchase-invoice" },
       { name: "Purchase", path: "/purchase" },
-      { name: "Credit Note", path: "/credit-note" },
-      { name: "Debit Note", path: "/debit-note" },
-      { name: "Journal Voucher", path: "/journal-voucher" },
-      { name: "Unapplied Adjustment Entry", path: "/unapplied-adjustment" },
-      { name: "Quotation", path: "/quotation" },
-      { name: "Quotation Comparison", path: "/quotation-comparison" },
       {
         name: "Purchase Order",
         children: [
@@ -73,13 +65,15 @@ const menuData = [
         children: [
           { name: "Cylinder Sales Order", path: "/sales-order" }
         ]
-      },
-      { name: "Other Store", path: "/other-store" }
+      }
     ]
   },
   {
     name: "Report",
-    path: "/report"
+    children: [
+      { name: "Stock Report", path: "/stock-report" },
+      { name: "Cylinder Holding Report", path: "/holding-report" }
+    ]
   }
 ];
 

@@ -29,7 +29,9 @@ public class SalesInvoice extends BaseEntity {
     private String salesExecutive;
     @Column(length = 1000)
     private String remarks;
-    private String drChallanNo;
+    private String gdaNo;
+    private String vehicleNo;
+    private String vendorCode;
     private Integer crDays;
     private LocalDate dueDate;
 
@@ -45,6 +47,14 @@ public class SalesInvoice extends BaseEntity {
     private Double roundOff;
     private Double netTotal;
     private Double totalQty;
+    
+    @Column(nullable = false, columnDefinition = "DOUBLE PRECISION DEFAULT 0.0")
+    private Double paidAmount = 0.0;
+
+    @Transient
+    public Double getBalanceAmount() {
+        return (netTotal != null ? netTotal : 0.0) - (paidAmount != null ? paidAmount : 0.0);
+    }
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "sales_invoice_id")

@@ -45,4 +45,9 @@ public class SalesInvoiceController {
         service.delete(id);
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping("/outstanding/customer/{customerName}")
+    public List<SalesInvoice> getOutstandingByCustomer(@PathVariable String customerName) {
+        return service.findOutstandingByCustomerName(customerName);
+    }
 }

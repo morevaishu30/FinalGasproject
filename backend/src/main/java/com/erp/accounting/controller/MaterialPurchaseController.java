@@ -25,4 +25,9 @@ public class MaterialPurchaseController {
         if (financialYear != null) data.setFinancialYearId(financialYear);
         return repository.save(data);
     }
+
+    @GetMapping("/outstanding/supplier/{supplierName}")
+    public List<MaterialPurchase> getOutstandingBySupplier(@PathVariable String supplierName) {
+        return repository.findOutstandingBySupplierName(supplierName);
+    }
 }
