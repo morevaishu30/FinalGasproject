@@ -11,10 +11,18 @@ services:
     dockerContext: ./backend
     plan: free
     envVars:
-      - key: DB_URL
+      - key: DB_HOST
         fromDatabase:
           name: erp-db
-          property: connectionString
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: erp-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: erp-db
+          property: database
       - key: DB_USERNAME
         fromDatabase:
           name: erp-db
