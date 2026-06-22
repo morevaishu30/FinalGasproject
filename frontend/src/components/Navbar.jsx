@@ -11,10 +11,7 @@ const menuData = [
   {
     name: "Master",
     children: [
-      {
-        name: "Person Detail Master",
-        children: [{ name: "Person Details", path: "/person-details" }]
-      },
+
       {
         name: "Account Book Master",
         children: [
@@ -25,23 +22,58 @@ const menuData = [
       {
         name: "Inventories / Item Master",
         children: [
-          { name: "Item Details", path: "/item-master" },
-          { name: "Cylinder Master", path: "/cylinder-master" }
+          { name: "Cylinder Master", path: "/cylinder-master" },
+          { name: "Item Group Master", path: "/item-group" }
         ]
       },
-      {
-        name: "Rate Master",
-        children: [{ name: "Rates", path: "/rate-master" }]
-      }
+
     ]
   },
   {
     name: "Transaction",
-    path: "/transaction"
+    children: [
+      { name: "Bank Receipt", path: "/bank-receipt" },
+      { name: "Bank Payment", path: "/bank-payment" },
+      { name: "Cash Receipt", path: "/cash-receipt" },
+      { name: "Cash Payment", path: "/cash-payment" },
+      {
+        name: "Inward Entry",
+        children: [
+          { name: "Material Inward (Cylinder) (Supplier) (FTM)", path: "/material-inward-supplier" },
+          { name: "Empty Cylinder Inward (ECR)", path: "/material-inward-ecr" },
+          { name: "Consumable Inward", path: "/consumable-inward" }
+        ]
+      },
+      {
+        name: "Outward Entry",
+        children: [
+          { name: "Material Outward", path: "/material-outward" },
+          { name: "Empty Cylinder Trans. (ETM)", path: "/empty-cylinder-etm" }
+        ]
+      },
+      { name: "Sales Invoice", path: "/sales-invoice" },
+      { name: "Purchase Invoice", path: "/purchase-invoice" },
+      { name: "Purchase", path: "/purchase" },
+      {
+        name: "Purchase Order",
+        children: [
+          { name: "Cylinder (Supplier) PO", path: "/cylinder-po" }
+        ]
+      },
+      {
+        name: "Sales Order",
+        children: [
+          { name: "Cylinder Sales Order", path: "/sales-order" }
+        ]
+      }
+    ]
   },
   {
     name: "Report",
-    path: "/report"
+    children: [
+      { name: "Stock Report", path: "/stock-report" },
+      { name: "Cylinder Holding Report", path: "/holding-report" }
+    ]
   }
 ];
 
@@ -63,12 +95,12 @@ const MenuItem = ({ item, onAction, mobile }) => {
   }
 
   return (
-    <div 
+    <div
       className={`relative group/item ${mobile ? 'border-b border-white/5' : ''}`}
       onMouseEnter={() => !mobile && setIsOpen(true)}
       onMouseLeave={() => !mobile && setIsOpen(false)}
     >
-      <button 
+      <button
         onClick={() => mobile && setIsOpen(!isOpen)}
         className={`flex items-center justify-between w-full font-medium ${mobile ? 'px-4 py-3 text-base text-white hover:bg-white/10' : 'px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700'} transition-colors`}
       >
@@ -92,29 +124,29 @@ const Navbar = ({ currentFY, onChangeFY, onLogout }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
-            <Link to="/" className="flex-shrink-0 font-extrabold text-2xl tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-100 drop-shadow-md mr-10">
+            <Link to="/" className="flex-shrink-0 font-extrabold text-xl tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-100 drop-shadow-md mr-10">
               GAS SYSTEM
             </Link>
-            
+
             <div className="hidden md:flex space-x-1">
               {menuData.map((menu, idx) => (
                 <div key={idx} className="relative group">
                   {menu.children ? (
                     <>
-                      <button className="px-4 py-2 rounded-lg text-sm font-semibold hover:bg-white/10 hover:shadow-inner transition-all duration-300 focus:outline-none flex items-center">
+                      <button className="px-3 py-1.5 rounded-lg text-[13px] font-semibold hover:bg-white/10 hover:shadow-inner transition-all duration-300 focus:outline-none flex items-center">
                         {menu.name}
                         <svg className="w-4 h-4 ml-1 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                       </button>
-                      <div className="absolute left-0 mt-2 w-60 bg-white border border-gray-100 shadow-2xl rounded-xl z-40 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top -translate-y-2 group-hover:translate-y-0 py-1">
+                      <div className="absolute left-0 mt-1 w-56 bg-white border border-gray-100 shadow-2xl rounded-xl z-40 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top -translate-y-2 group-hover:translate-y-0 py-1">
                         {menu.children.map((child, cIdx) => (
                           <MenuItem key={cIdx} item={child} onAction={onChangeFY} mobile={false} />
                         ))}
                       </div>
                     </>
                   ) : (
-                    <Link 
+                    <Link
                       to={menu.path}
-                      className="px-4 py-2 rounded-lg text-sm font-semibold hover:bg-white/10 hover:shadow-inner transition-all duration-300 focus:outline-none block inline-flex"
+                      className="px-3 py-1.5 rounded-lg text-[13px] font-semibold hover:bg-white/10 hover:shadow-inner transition-all duration-300 focus:outline-none block inline-flex"
                     >
                       {menu.name}
                     </Link>
@@ -136,7 +168,7 @@ const Navbar = ({ currentFY, onChangeFY, onLogout }) => {
 
           {/* Mobile menu button */}
           <div className="md:hidden flex items-center">
-            <button 
+            <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="inline-flex items-center justify-center p-2 rounded-md text-white hover:text-white hover:bg-white/10 focus:outline-none transition-colors"
             >

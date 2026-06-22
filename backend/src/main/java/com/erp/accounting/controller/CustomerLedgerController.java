@@ -9,6 +9,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/customer-ledgers")
+@CrossOrigin(origins = "*")
 public class CustomerLedgerController {
 
     @Autowired
@@ -24,5 +25,17 @@ public class CustomerLedgerController {
     public CustomerLedger create(@RequestBody CustomerLedger ledger, @RequestHeader("X-Financial-Year") String financialYear) {
         ledger.setFinancialYearId(financialYear);
         return repository.save(ledger);
+    }
+
+    @PutMapping("/{id}")
+    public CustomerLedger update(@PathVariable Long id, @RequestBody CustomerLedger ledger, @RequestHeader("X-Financial-Year") String financialYear) {
+        ledger.setId(id);
+        ledger.setFinancialYearId(financialYear);
+        return repository.save(ledger);
+    }
+
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable Long id) {
+        repository.deleteById(id);
     }
 }
