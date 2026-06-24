@@ -1,26 +1,27 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, lazy, Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import FinancialYearModal from "./components/FinancialYearModal";
-import Home from "./pages/Home";
-import CustomerLedger from "./pages/CustomerLedger";
-import SupplierLedger from "./pages/SupplierLedger";
-import CylinderMaster from "./pages/CylinderMaster";
-import ItemGroupMaster from "./pages/ItemGroupMaster";
 import LoginPage from "./pages/LoginPage";
-import MaterialInwardFTM from "./pages/MaterialInwardFTM";
-import MaterialInwardECR from "./pages/MaterialInwardECR";
-import CylinderSupplierPO from "./pages/CylinderSupplierPO";
-import MaterialOutward from "./pages/MaterialOutward";
-import SalesOrder from "./pages/SalesOrder";
-import MaterialPurchase from "./pages/MaterialPurchase";
-import SalesInvoice from "./pages/SalesInvoice";
-import PurchaseInvoice from "./pages/PurchaseInvoice";
-import MaterialOutwardETM from "./pages/MaterialOutwardETM";
-import ConsumableInward from "./pages/ConsumableInward";
-import VoucherTransaction from "./pages/VoucherTransaction";
-import StockReport from "./pages/StockReport";
-import CylinderHoldingReport from "./pages/CylinderHoldingReport";
+
+const Home = lazy(() => import("./pages/Home"));
+const CustomerLedger = lazy(() => import("./pages/CustomerLedger"));
+const SupplierLedger = lazy(() => import("./pages/SupplierLedger"));
+const CylinderMaster = lazy(() => import("./pages/CylinderMaster"));
+const ItemGroupMaster = lazy(() => import("./pages/ItemGroupMaster"));
+const MaterialInwardFTM = lazy(() => import("./pages/MaterialInwardFTM"));
+const MaterialInwardECR = lazy(() => import("./pages/MaterialInwardECR"));
+const CylinderSupplierPO = lazy(() => import("./pages/CylinderSupplierPO"));
+const MaterialOutward = lazy(() => import("./pages/MaterialOutward"));
+const SalesOrder = lazy(() => import("./pages/SalesOrder"));
+const MaterialPurchase = lazy(() => import("./pages/MaterialPurchase"));
+const SalesInvoice = lazy(() => import("./pages/SalesInvoice"));
+const PurchaseInvoice = lazy(() => import("./pages/PurchaseInvoice"));
+const MaterialOutwardETM = lazy(() => import("./pages/MaterialOutwardETM"));
+const ConsumableInward = lazy(() => import("./pages/ConsumableInward"));
+const VoucherTransaction = lazy(() => import("./pages/VoucherTransaction"));
+const StockReport = lazy(() => import("./pages/StockReport"));
+const CylinderHoldingReport = lazy(() => import("./pages/CylinderHoldingReport"));
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(localStorage.getItem("isAuthenticated") === "true");
@@ -70,6 +71,7 @@ function App() {
         />
         
         <main className="flex-grow container mx-auto py-6">
+        <Suspense fallback={<div className="flex items-center justify-center h-64 text-gray-400">Loading...</div>}>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/customer-ledger" element={<CustomerLedger />} />
@@ -98,6 +100,7 @@ function App() {
             {/* Catch-all route to redirect back to home */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+        </Suspense>
         </main>
 
         <FinancialYearModal 
