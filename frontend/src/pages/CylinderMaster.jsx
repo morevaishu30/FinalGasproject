@@ -141,6 +141,7 @@ const CylinderMaster = () => {
                     <th className="p-2 text-left border">Original No</th>
                     <th className="p-2 text-left border">Ownership</th>
                     <th className="p-2 text-left border">Grade</th>
+                    <th className="p-2 text-left border">Cylinder Type</th>
                     <th className="p-2 text-right border">Actions</th>
                   </tr>
                 </thead>
@@ -150,6 +151,7 @@ const CylinderMaster = () => {
                       <td className="p-2 border">{c.cylinderOriginalNo}</td>
                       <td className="p-2 border">{c.cylinderOwnership}</td>
                       <td className="p-2 border">{c.itemGrade}</td>
+                      <td className="p-2 border">{c.cylinderType}</td>
                       <td className="p-2 border text-right space-x-2">
                         <button onClick={() => handleEditSelect(c)} className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded border border-blue-300">Select</button>
                         <button onClick={() => handleDelete(c.id)} className="bg-red-100 text-red-700 px-2 py-0.5 rounded border border-red-300">Delete</button>

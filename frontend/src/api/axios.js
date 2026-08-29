@@ -5,7 +5,7 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const financialYear = localStorage.getItem("financialYear");
+  const financialYear = localStorage.getItem("financialYear") || "2025-2026";
   if (financialYear) {
     config.headers["X-Financial-Year"] = financialYear;
   }

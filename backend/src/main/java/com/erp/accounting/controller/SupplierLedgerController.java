@@ -25,8 +25,10 @@ public class SupplierLedgerController {
     @PostMapping
     public SupplierLedger create(@RequestBody SupplierLedger ledger, @RequestHeader(value = "X-Financial-Year", required = false) String financialYear) {
         logger.info("Creating ledger: {} for FY: {}", ledger.getSupplierName(), financialYear);
-        if (financialYear != null) {
+        if (financialYear != null && !financialYear.trim().isEmpty()) {
             ledger.setFinancialYearId(financialYear);
+        } else if (ledger.getFinancialYearId() == null || ledger.getFinancialYearId().trim().isEmpty()) {
+            ledger.setFinancialYearId("2025-2026");
         }
         return service.save(ledger, ledger.getFinancialYearId());
     }
@@ -35,8 +37,10 @@ public class SupplierLedgerController {
     public SupplierLedger update(@PathVariable Long id, @RequestBody SupplierLedger ledger, @RequestHeader(value = "X-Financial-Year", required = false) String financialYear) {
         logger.info("Updating ledger ID: {} for FY: {}", id, financialYear);
         ledger.setId(id);
-        if (financialYear != null) {
+        if (financialYear != null && !financialYear.trim().isEmpty()) {
             ledger.setFinancialYearId(financialYear);
+        } else if (ledger.getFinancialYearId() == null || ledger.getFinancialYearId().trim().isEmpty()) {
+            ledger.setFinancialYearId("2025-2026");
         }
         return service.save(ledger, ledger.getFinancialYearId());
     }

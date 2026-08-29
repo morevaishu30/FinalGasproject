@@ -326,24 +326,8 @@ const MaterialPurchase = () => {
         </table>
       </div>
 
-      <div className="grid grid-cols-12 gap-2 mt-1">
-          <div className="col-span-8 space-y-1">
-            <div className="flex items-center space-x-2 bg-yellow-100 border border-yellow-400 px-2 py-1 font-bold text-[10px]">
-                <span className="text-yellow-800">💡 Tip: Press 'INS' for New Entry, 'DEL' for Delete Entry 'ENTER' to Edit</span>
-            </div>
-            <div className="grid grid-cols-3 gap-2 text-[10px] bg-white border border-gray-400 p-2">
-                <div className="space-y-1">
-                    <div className="flex justify-between"><span>Total Qty:</span><span className="font-bold">{items.reduce((s,i) => s + i.qty, 0).toFixed(3)}</span></div>
-                    <div className="flex justify-between text-blue-800"><span>Our Cyl:</span><span className="font-bold">{items.reduce((s,i) => s + (parseInt(i.ourCyl)||0), 0)}</span></div>
-                </div>
-                <div className="space-y-1">
-                    <div className="flex justify-between text-red-800"><span>Party Cyl:</span><span className="font-bold">{items.reduce((s,i) => s + (parseInt(i.partyCyl)||0), 0)}</span></div>
-                    <div className="flex justify-between font-bold"><span>Total Cyl:</span><span>{items.reduce((s,i) => s + (parseInt(i.ourCyl)||0) + (parseInt(i.partyCyl)||0), 0)}</span></div>
-                </div>
-            </div>
-            <div className="text-red-600 font-bold text-xs mt-2 uppercase">GST No: 24AAACV5053F2ZM <br/> Type: Registered</div>
-          </div>
-          <div className="col-span-4 bg-white border border-gray-400 p-2 space-y-0.5">
+      <div className="flex justify-end mt-1">
+          <div className="w-full sm:w-80 md:w-96 bg-white border border-gray-400 p-2 space-y-0.5 shadow-sm">
             <div className="flex justify-between"><span>Gross total :</span><span className="font-bold">{formData.grossTotal.toFixed(2)}</span></div>
             <div className="flex justify-between"><span>Discount :</span><input type="number" className="border border-gray-400 w-16 text-right h-4" /></div>
             <div className="flex justify-between"><span>P.F. :</span><span className="font-bold">0.00</span></div>
@@ -351,7 +335,7 @@ const MaterialPurchase = () => {
             <div className="flex justify-between"><span>IGST :</span><span className="font-bold">0.00</span></div>
             <div className="flex justify-between"><span>CGST :</span><span className="font-bold">0.00</span></div>
             <div className="flex justify-between"><span>SGST :</span><span className="font-bold">0.00</span></div>
-            <div className="border-t border-gray-400 pt-1 flex justify-between text-blue-800 font-bold text-sm">
+            <div className="border-t border-gray-400 pt-1 flex justify-between text-blue-800 font-bold text-sm bg-blue-50 px-1 mt-1">
                 <span>Net Total :</span>
                 <span>{formData.netTotal.toFixed(2)}</span>
             </div>

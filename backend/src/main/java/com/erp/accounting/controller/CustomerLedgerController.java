@@ -17,20 +17,28 @@ public class CustomerLedgerController {
 
     @GetMapping
     public List<CustomerLedger> getAll(@RequestHeader(value = "X-Financial-Year", required = false) String financialYear) {
-        if (financialYear == null) return repository.findAll();
+        if (financialYear == null || financialYear.trim().isEmpty()) return repository.findAll();
         return repository.findAllByFinancialYearId(financialYear);
     }
 
     @PostMapping
-    public CustomerLedger create(@RequestBody CustomerLedger ledger, @RequestHeader("X-Financial-Year") String financialYear) {
-        ledger.setFinancialYearId(financialYear);
+    public CustomerLedger create(@RequestBody CustomerLedger ledger, @RequestHeader(value = "X-Financial-Year", required = false) String financialYear) {
+        if (financialYear != null && !financialYear.trim().isEmpty()) {
+            ledger.setFinancialYearId(financialYear);
+        } else if (ledger.getFinancialYearId() == null || ledger.getFinancialYearId().trim().isEmpty()) {
+            ledger.setFinancialYearId("2025-2026");
+        }
         return repository.save(ledger);
     }
 
     @PutMapping("/{id}")
-    public CustomerLedger update(@PathVariable Long id, @RequestBody CustomerLedger ledger, @RequestHeader("X-Financial-Year") String financialYear) {
+    public CustomerLedger update(@PathVariable Long id, @RequestBody CustomerLedger ledger, @RequestHeader(value = "X-Financial-Year", required = false) String financialYear) {
         ledger.setId(id);
-        ledger.setFinancialYearId(financialYear);
+        if (financialYear != null && !financialYear.trim().isEmpty()) {
+            ledger.setFinancialYearId(financialYear);
+        } else if (ledger.getFinancialYearId() == null || ledger.getFinancialYearId().trim().isEmpty()) {
+            ledger.setFinancialYearId("2025-2026");
+        }
         return repository.save(ledger);
     }
 

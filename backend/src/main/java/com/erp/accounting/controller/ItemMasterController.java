@@ -8,25 +8,34 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/item-masters")
+@CrossOrigin(origins = "*")
 public class ItemMasterController {
     @Autowired private ItemMasterRepository repository;
 
     @GetMapping
     public List<ItemMaster> getAll(@RequestHeader(value = "X-Financial-Year", required = false) String financialYear) {
-        if (financialYear == null) return repository.findAll();
+        if (financialYear == null || financialYear.trim().isEmpty()) return repository.findAll();
         return repository.findAllByFinancialYearId(financialYear);
     }
 
     @PostMapping
-    public ItemMaster create(@RequestBody ItemMaster master, @RequestHeader("X-Financial-Year") String financialYear) {
-        master.setFinancialYearId(financialYear);
+    public ItemMaster create(@RequestBody ItemMaster master, @RequestHeader(value = "X-Financial-Year", required = false) String financialYear) {
+        if (financialYear != null && !financialYear.trim().isEmpty()) {
+            master.setFinancialYearId(financialYear);
+        } else if (master.getFinancialYearId() == null || master.getFinancialYearId().trim().isEmpty()) {
+            master.setFinancialYearId("2025-2026");
+        }
         return repository.save(master);
     }
 
     @PutMapping("/{id}")
-    public ItemMaster update(@PathVariable Long id, @RequestBody ItemMaster master, @RequestHeader("X-Financial-Year") String financialYear) {
+    public ItemMaster update(@PathVariable Long id, @RequestBody ItemMaster master, @RequestHeader(value = "X-Financial-Year", required = false) String financialYear) {
         master.setId(id);
-        master.setFinancialYearId(financialYear);
+        if (financialYear != null && !financialYear.trim().isEmpty()) {
+            master.setFinancialYearId(financialYear);
+        } else if (master.getFinancialYearId() == null || master.getFinancialYearId().trim().isEmpty()) {
+            master.setFinancialYearId("2025-2026");
+        }
         return repository.save(master);
     }
 

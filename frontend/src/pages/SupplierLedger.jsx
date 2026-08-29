@@ -59,7 +59,7 @@ const SupplierLedger = () => {
   const [itemGroupOptions, setItemGroupOptions] = useState([]);
 
   useEffect(() => {
-    fetchLedgers();
+    fetchLedgers(false);
     fetchItemGroups();
   }, []);
 
@@ -132,11 +132,13 @@ const SupplierLedger = () => {
     }
   };
 
-  const fetchLedgers = async () => {
+  const fetchLedgers = async (openModal = true) => {
     try {
       const response = await api.get("/supplier-ledgers");
       setAllLedgers(response.data);
-      setShowList(true);
+      if (openModal !== false) {
+        setShowList(true);
+      }
     } catch (error) {
       console.error("Error fetching ledgers", error);
     }
@@ -152,7 +154,7 @@ const SupplierLedger = () => {
     if (window.confirm("Are you sure you want to delete this ledger?")) {
       try {
         await api.delete(`/supplier-ledgers/${id}`);
-        fetchLedgers();
+        fetchLedgers(true);
       } catch (error) {
         console.error("Error deleting ledger", error);
       }

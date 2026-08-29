@@ -26,12 +26,17 @@ public class SalesInvoice extends BaseEntity {
     private String customerLocation;
     @Column(length = 500)
     private String customerAddress;
+    private String customerGstNo;
     private String salesExecutive;
     @Column(length = 1000)
     private String remarks;
     private String gdaNo;
     private String vehicleNo;
     private String vendorCode;
+    private String poNo;
+    private LocalDate poDate;
+    private String chNo;
+    private LocalDate chDate;
     private Integer crDays;
     private LocalDate dueDate;
 

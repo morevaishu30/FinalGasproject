@@ -366,5 +366,281 @@ public class DataSeeder implements CommandLineRunner {
         } else {
             System.out.println("Sales invoices already exist, skipping transaction seeder.");
         }
+
+        // ── Ensure Thermax Limited exists ──
+        if (customerLedgerRepository.findAll().stream().noneMatch(c -> "Thermax Limited".equalsIgnoreCase(c.getCustomerName()))) {
+            CustomerLedger thermax = new CustomerLedger();
+            thermax.setCustomerName("Thermax Limited");
+            thermax.setPrintName("Thermax Limited");
+            thermax.setAccountType("Sales Party");
+            thermax.setAddress1("D-13,-R.D.Age Road,MIDC");
+            thermax.setAddress2("Chinchwad");
+            thermax.setCity("Pune");
+            thermax.setState("Maharashtra");
+            thermax.setPincode("411019");
+            thermax.setGstin("27AAACT3910D1ZS");
+            thermax.setCustomerCode("169197");
+            thermax.setFinancialYearId("2025-2026");
+            customerLedgerRepository.save(thermax);
+            System.out.println("Thermax Limited customer seeded.");
+        }
+
+        // ── Ensure Invoice 126 exists ──
+        if (salesInvoiceRepository.findAll().stream().noneMatch(s -> "126".equals(s.getInvoiceNo()))) {
+            SalesInvoice inv126 = new SalesInvoice();
+            inv126.setSalesAc("SALES ACCOUNT - MATERIAL");
+            inv126.setInvoiceNo("126");
+            inv126.setInvoiceDate(LocalDate.of(2026, 8, 17));
+            inv126.setInvoiceType("REGULAR");
+            inv126.setTaxType("GST LOCAL");
+            inv126.setGstType("Sales Taxable");
+            inv126.setCustomerName("Thermax Limited");
+            inv126.setCustomerLocation("DEFAULT ADDRESS");
+            inv126.setCustomerAddress("D-13,-R.D.Age Road,MIDC,\nChinchwad-Pune-411019");
+            inv126.setVehicleNo("MH14KG8157");
+            inv126.setVendorCode("169197");
+            inv126.setPoNo("5510774");
+            inv126.setPoDate(LocalDate.of(2026, 8, 4));
+            inv126.setChNo("");
+            inv126.setCrDays(30);
+            inv126.setDueDate(LocalDate.of(2026, 9, 16));
+            inv126.setGrossTotal(37350.0);
+            inv126.setDiscount(0.0);
+            inv126.setPf(0.0);
+            inv126.setFreight(0.0);
+            inv126.setOther(0.0);
+            inv126.setCgst(3361.50);
+            inv126.setSgst(3361.50);
+            inv126.setIgst(0.0);
+            inv126.setRoundOff(0.0);
+            inv126.setNetTotal(44073.0);
+            inv126.setTotalQty(3.0);
+            inv126.setFinancialYearId("2025-2026");
+
+            SalesInvoiceItem itm1 = new SalesInvoiceItem();
+            itm1.setItemDescription("DUAL STAGE REGULATORS OXYGEN");
+            itm1.setUnit("01 Nos");
+            itm1.setQty(1.0);
+            itm1.setCapacity(1.0);
+            itm1.setRatePer("Nos");
+            itm1.setRate(12450.0);
+            itm1.setAmount(12450.0);
+            itm1.setHsn("84818030");
+            inv126.getItems().add(itm1);
+
+            SalesInvoiceItem itm2 = new SalesInvoiceItem();
+            itm2.setItemDescription("DUAL STAGE REGULATORS NITROGEN");
+            itm2.setUnit("01 Nos");
+            itm2.setQty(1.0);
+            itm2.setCapacity(1.0);
+            itm2.setRatePer("Nos");
+            itm2.setRate(12450.0);
+            itm2.setAmount(12450.0);
+            itm2.setHsn("84818030");
+            inv126.getItems().add(itm2);
+
+            SalesInvoiceItem itm3 = new SalesInvoiceItem();
+            itm3.setItemDescription("DUAL STAGE REGULATORS CARBON DIOXIDE");
+            itm3.setUnit("01 Nos");
+            itm3.setQty(1.0);
+            itm3.setCapacity(1.0);
+            itm3.setRatePer("Nos");
+            itm3.setRate(12450.0);
+            itm3.setAmount(12450.0);
+            itm3.setHsn("84818030");
+            inv126.getItems().add(itm3);
+
+            salesInvoiceRepository.save(inv126);
+            System.out.println("Invoice 126 seeded successfully!");
+        }
+
+        // ── Ensure Techknowgreen Solution Limited exists ──
+        if (customerLedgerRepository.findAll().stream().noneMatch(c -> c.getCustomerName() != null && c.getCustomerName().contains("Techknowgreen"))) {
+            CustomerLedger techknow = new CustomerLedger();
+            techknow.setCustomerName("Techknowgreen Solution Limited.");
+            techknow.setPrintName("Techknowgreen Solution Limited.");
+            techknow.setAccountType("Sales Party");
+            techknow.setAddress1("202, Hem Opal, Plot No.26 Near Joshi Wadewale Lane");
+            techknow.setAddress2("Ekta Society, Wakdewadi");
+            techknow.setCity("Pune");
+            techknow.setState("Maharashtra");
+            techknow.setPincode("411005");
+            techknow.setGstin("27AAJCT9287E1ZR");
+            techknow.setCustomerCode("");
+            techknow.setFinancialYearId("2025-2026");
+            customerLedgerRepository.save(techknow);
+            System.out.println("Techknowgreen Solution Limited customer seeded.");
+        }
+
+        // ── Ensure Invoice 131 exists ──
+        if (salesInvoiceRepository.findAll().stream().noneMatch(s -> "131".equals(s.getInvoiceNo()))) {
+            SalesInvoice inv131 = new SalesInvoice();
+            inv131.setSalesAc("SALES ACCOUNT - MATERIAL");
+            inv131.setInvoiceNo("131");
+            inv131.setInvoiceDate(LocalDate.of(2026, 8, 20));
+            inv131.setInvoiceType("REGULAR");
+            inv131.setTaxType("GST LOCAL");
+            inv131.setGstType("Sales Taxable");
+            inv131.setCustomerName("Thermax Limited");
+            inv131.setCustomerLocation("DEFAULT ADDRESS");
+            inv131.setCustomerAddress("D-13,-R.D.Age Road,MIDC,\nChinchwad-Pune-411019");
+            inv131.setVehicleNo("MH14KG8157");
+            inv131.setVendorCode("169197");
+            inv131.setPoNo("5510774");
+            inv131.setPoDate(LocalDate.of(2026, 8, 4));
+            inv131.setChNo("N/A");
+            inv131.setCrDays(30);
+            inv131.setDueDate(LocalDate.of(2026, 9, 19));
+            inv131.setGrossTotal(37350.0);
+            inv131.setDiscount(0.0);
+            inv131.setPf(0.0);
+            inv131.setFreight(0.0);
+            inv131.setOther(0.0);
+            inv131.setCgst(3361.50);
+            inv131.setSgst(3361.50);
+            inv131.setIgst(0.0);
+            inv131.setRoundOff(0.0);
+            inv131.setNetTotal(44073.0);
+            inv131.setTotalQty(3.0);
+            inv131.setFinancialYearId("2025-2026");
+
+            SalesInvoiceItem itm1 = new SalesInvoiceItem();
+            itm1.setItemDescription("DUAL STAGE REGULATORS OXYGEN");
+            itm1.setUnit("01 Nos");
+            itm1.setQty(1.0);
+            itm1.setCapacity(1.0);
+            itm1.setRatePer("Nos");
+            itm1.setRate(12450.0);
+            itm1.setAmount(12450.0);
+            itm1.setHsn("84818030");
+            inv131.getItems().add(itm1);
+
+            SalesInvoiceItem itm2 = new SalesInvoiceItem();
+            itm2.setItemDescription("DUAL STAGE REGULATORS NITROGEN");
+            itm2.setUnit("01 Nos");
+            itm2.setQty(1.0);
+            itm2.setCapacity(1.0);
+            itm2.setRatePer("Nos");
+            itm2.setRate(12450.0);
+            itm2.setAmount(12450.0);
+            itm2.setHsn("84818030");
+            inv131.getItems().add(itm2);
+
+            SalesInvoiceItem itm3 = new SalesInvoiceItem();
+            itm3.setItemDescription("DUAL STAGE REGULATORS CARBON DIOXIDE");
+            itm3.setUnit("01 Nos");
+            itm3.setQty(1.0);
+            itm3.setCapacity(1.0);
+            itm3.setRatePer("Nos");
+            itm3.setRate(12450.0);
+            itm3.setAmount(12450.0);
+            itm3.setHsn("84818030");
+            inv131.getItems().add(itm3);
+
+            salesInvoiceRepository.save(inv131);
+            System.out.println("Invoice 131 seeded successfully!");
+        }
+
+        // ── Ensure Invoice 132 exists (Techknowgreen Solution Limited - Helium Gas) ──
+        if (salesInvoiceRepository.findAll().stream().noneMatch(s -> "132".equals(s.getInvoiceNo()))) {
+            SalesInvoice inv132 = new SalesInvoice();
+            inv132.setSalesAc("SALES ACCOUNT - MATERIAL");
+            inv132.setInvoiceNo("132");
+            inv132.setInvoiceDate(LocalDate.of(2026, 8, 22));
+            inv132.setInvoiceType("REGULAR");
+            inv132.setTaxType("GST LOCAL");
+            inv132.setGstType("Sales Taxable");
+            inv132.setCustomerName("Techknowgreen Solution Limited.");
+            inv132.setCustomerLocation("DEFAULT ADDRESS");
+            inv132.setCustomerAddress("202, Hem Opal, Plot No.26 Near Joshi Wadewale Lane,\nEkta Society, Wakdewadi Pune-411005");
+            inv132.setCustomerGstNo("27AAJCT9287E1ZR");
+            inv132.setVehicleNo("MH14MS1129");
+            inv132.setVendorCode("");
+            inv132.setPoNo("262711269");
+            inv132.setPoDate(LocalDate.of(2026, 8, 4));
+            inv132.setChNo("234");
+            inv132.setChDate(LocalDate.of(2026, 8, 19));
+            inv132.setCrDays(30);
+            inv132.setDueDate(LocalDate.of(2026, 9, 21));
+            inv132.setGrossTotal(67200.0);
+            inv132.setDiscount(0.0);
+            inv132.setPf(0.0);
+            inv132.setFreight(0.0);
+            inv132.setOther(0.0);
+            inv132.setCgst(6048.0);
+            inv132.setSgst(6048.0);
+            inv132.setIgst(0.0);
+            inv132.setRoundOff(0.0);
+            inv132.setNetTotal(79296.0);
+            inv132.setTotalQty(2.0);
+            inv132.setFinancialYearId("2025-2026");
+
+            SalesInvoiceItem heliumItem = new SalesInvoiceItem();
+            heliumItem.setItemDescription("HELIUM GAS");
+            heliumItem.setUnit("02 Nos");
+            heliumItem.setQty(2.0);
+            heliumItem.setCapacity(1.0);
+            heliumItem.setOurCyl(2);
+            heliumItem.setPartyCyl(0);
+            heliumItem.setRatePer("Nos");
+            heliumItem.setRate(33600.0);
+            heliumItem.setAmount(67200.0);
+            heliumItem.setHsn("28042910");
+            inv132.getItems().add(heliumItem);
+
+            salesInvoiceRepository.save(inv132);
+            System.out.println("Invoice 132 (Techknowgreen / HELIUM GAS) seeded successfully!");
+        }
+
+        // ── Ensure Invoice 133 exists (Techknowgreen Solution Limited - Transport charge) ──
+        if (salesInvoiceRepository.findAll().stream().noneMatch(s -> "133".equals(s.getInvoiceNo()))) {
+            SalesInvoice inv133 = new SalesInvoice();
+            inv133.setSalesAc("SALES ACCOUNT - MATERIAL");
+            inv133.setInvoiceNo("133");
+            inv133.setInvoiceDate(LocalDate.of(2026, 8, 22));
+            inv133.setInvoiceType("REGULAR");
+            inv133.setTaxType("GST LOCAL");
+            inv133.setGstType("Sales Taxable");
+            inv133.setCustomerName("Techknowgreen Solution Limited.");
+            inv133.setCustomerLocation("DEFAULT ADDRESS");
+            inv133.setCustomerAddress("202, Hem Opal, Plot No.26 Near Joshi Wadewale Lane,\nEkta Society, Wakdewadi Pune-411005");
+            inv133.setCustomerGstNo("27AAJCT9287E1ZR");
+            inv133.setVehicleNo("MH14MS1129");
+            inv133.setVendorCode("");
+            inv133.setPoNo("");
+            inv133.setPoDate(null);
+            inv133.setChNo("234");
+            inv133.setChDate(LocalDate.of(2026, 8, 22));
+            inv133.setCrDays(30);
+            inv133.setDueDate(LocalDate.of(2026, 9, 21));
+            inv133.setGrossTotal(1000.0);
+            inv133.setDiscount(0.0);
+            inv133.setPf(0.0);
+            inv133.setFreight(0.0);
+            inv133.setOther(0.0);
+            inv133.setCgst(90.0);
+            inv133.setSgst(90.0);
+            inv133.setIgst(0.0);
+            inv133.setRoundOff(0.0);
+            inv133.setNetTotal(1180.0);
+            inv133.setTotalQty(1.0);
+            inv133.setFinancialYearId("2025-2026");
+
+            SalesInvoiceItem transportItem = new SalesInvoiceItem();
+            transportItem.setItemDescription("Transport charge");
+            transportItem.setUnit("Nos");
+            transportItem.setQty(1.0);
+            transportItem.setCapacity(1.0);
+            transportItem.setOurCyl(0);
+            transportItem.setPartyCyl(0);
+            transportItem.setRatePer("Nos");
+            transportItem.setRate(1000.0);
+            transportItem.setAmount(1000.0);
+            transportItem.setHsn("9967");
+            inv133.getItems().add(transportItem);
+
+            salesInvoiceRepository.save(inv133);
+            System.out.println("Invoice 133 (Techknowgreen / Transport charge) seeded successfully!");
+        }
     }
 }
