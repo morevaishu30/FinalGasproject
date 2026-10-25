@@ -273,7 +273,10 @@ const PurchaseInvoice = () => {
       alert("Purchase Invoice saved successfully!");
     } catch (error) {
       console.error("Error saving Purchase Invoice:", error);
-      alert("Error saving data. Please check backend.");
+      const isNetworkErr = !error.response || error.code === 'ERR_NETWORK';
+      alert(isNetworkErr
+        ? "Network Error: Could not connect to backend server. If using Render free tier, the server may take ~50s to wake up, or your Backend URL is not set. Please click 'Server API' in the top bar to verify or configure the URL."
+        : "Error saving data. " + (error.response?.data?.message || error.message));
     }
   };
 

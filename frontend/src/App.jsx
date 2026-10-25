@@ -2,7 +2,9 @@ import React, { useState, useEffect, lazy, Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import FinancialYearModal from "./components/FinancialYearModal";
+import BackendModal from "./components/BackendModal";
 import LoginPage from "./pages/LoginPage";
+import { getApiBaseUrl } from "./api/axios";
 
 const Home = lazy(() => import("./pages/Home"));
 const CustomerLedger = lazy(() => import("./pages/CustomerLedger"));
@@ -27,6 +29,10 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(localStorage.getItem("isAuthenticated") === "true");
   const [financialYear, setFinancialYear] = useState(localStorage.getItem("financialYear") || "2025-2026");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isBackendModalOpen, setIsBackendModalOpen] = useState(false);
+
+  const isDeployed = typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1";
+  const hasLocalhostInProd = isDeployed && getApiBaseUrl().includes("localhost");
 
   useEffect(() => {
     if (!localStorage.getItem("financialYear")) {
@@ -54,6 +60,8 @@ function App() {
   const handleAction = (action) => {
     if (action === "changeFY") {
       setIsModalOpen(true);
+    } else if (action === "changeApiUrl") {
+      setIsBackendModalOpen(true);
     }
   };
 
@@ -64,6 +72,23 @@ function App() {
   return (
     <Router>
       <div className="min-h-screen bg-gray-50 flex flex-col">
+        {hasLocalhostInProd && (
+          <div className="bg-amber-500 text-white text-xs px-4 py-2 font-semibold flex items-center justify-between shadow-md">
+            <div className="flex items-center space-x-2">
+              <span className="text-base">⚠️</span>
+              <span>
+                Backend API is not configured! Currently pointing to localhost:8080. &quot;Add&quot; and &quot;Save&quot; buttons will fail until you configure your backend URL.
+              </span>
+            </div>
+            <button
+              onClick={() => setIsBackendModalOpen(true)}
+              className="bg-white text-amber-900 px-3 py-1 rounded-md text-xs font-bold hover:bg-amber-100 transition shadow-sm ml-4 whitespace-nowrap"
+            >
+              Configure Backend URL
+            </button>
+          </div>
+        )}
+
         <Navbar 
           currentFY={financialYear} 
           onChangeFY={handleAction} 
@@ -107,6 +132,11 @@ function App() {
           isOpen={isModalOpen} 
           onClose={() => setIsModalOpen(false)} 
           onSave={handleFYChange} 
+        />
+
+        <BackendModal
+          isOpen={isBackendModalOpen}
+          onClose={() => setIsBackendModalOpen(false)}
         />
         
         <footer className="bg-white border-t border-gray-200 py-4 text-center text-xs text-gray-400">

@@ -77,22 +77,22 @@ const CustomerLedger = () => {
   const [newBankDetail, setNewBankDetail] = useState({ bankName: "", bankBranch: "", accountNo: "", ifscCode: "", bankAccountType: "", bankDetailsExtra: "" });
 
   const addBankDetail = () => {
-    setFormData({ ...formData, bankDetails: [...formData.bankDetails, newBankDetail] });
+    setFormData({ ...formData, bankDetails: [...(formData.bankDetails || []), newBankDetail] });
     setNewBankDetail({ bankName: "", bankBranch: "", accountNo: "", ifscCode: "", bankAccountType: "", bankDetailsExtra: "" });
   };
 
   const removeBankDetail = (index) => {
-    const updated = formData.bankDetails.filter((_, i) => i !== index);
+    const updated = (formData.bankDetails || []).filter((_, i) => i !== index);
     setFormData({ ...formData, bankDetails: updated });
   };
 
   const addContact = () => {
-    setFormData({ ...formData, contacts: [...formData.contacts, newContact] });
+    setFormData({ ...formData, contacts: [...(formData.contacts || []), newContact] });
     setNewContact({ personName: "", designation: "", mobile: "", email: "", emailType: "" });
   };
 
   const removeContact = (index) => {
-    const updated = formData.contacts.filter((_, i) => i !== index);
+    const updated = (formData.contacts || []).filter((_, i) => i !== index);
     setFormData({ ...formData, contacts: updated });
   };
 
@@ -117,6 +117,11 @@ const CustomerLedger = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.customerName || !formData.customerName.trim()) {
+      alert("Please enter a Customer Name.");
+      return;
+    }
+
     try {
       if (isEditing && formData.id) {
         await api.put(`/customer-ledgers/${formData.id}`, formData);
@@ -128,7 +133,10 @@ const CustomerLedger = () => {
       resetForm();
     } catch (error) {
       console.error("Error saving ledger", error);
-      alert("Error saving ledger. Please check backend.");
+      const isNetworkErr = !error.response || error.code === 'ERR_NETWORK';
+      alert(isNetworkErr
+        ? "Network Error: Could not connect to backend server. If using Render free tier, the server may take ~50s to wake up, or your Backend URL is not set. Please click 'Server API' in the top bar to verify or configure the URL."
+        : "Error saving ledger. Server response: " + (error.response?.data?.message || error.message));
     }
   };
 
@@ -145,7 +153,12 @@ const CustomerLedger = () => {
   };
 
   const handleEditSelect = (ledger) => {
-    setFormData(ledger);
+    setFormData({
+      ...ledger,
+      bankDetails: ledger.bankDetails || [],
+      contacts: ledger.contacts || [],
+      itemGroupDealings: ledger.itemGroupDealings || []
+    });
     setIsEditing(true);
     setShowList(false);
   };

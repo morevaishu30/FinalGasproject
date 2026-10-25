@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import api from '../api/axios';
 import DateInput, { formatDateToDDMMYYYY } from '../components/DateInput';
 
-const SalesInvoice = () => {
-  const [formData, setFormData] = useState({
+const PREDEFINED_INVOICES = {
+  '191': {
     salesAc: 'SALES ACCOUNT - MATERIAL',
-    invoiceNo: '126',
-    invoiceDate: '2026-08-17',
-    poNo: '5510774',
-    poDate: '2026-08-04',
+    invoiceNo: '191',
+    invoiceDate: '2026-10-10',
+    poNo: '5510890',
+    poDate: '2026-09-29',
     chNo: '',
     chDate: '',
     invoiceType: 'REGULAR',
@@ -16,7 +16,7 @@ const SalesInvoice = () => {
     gstType: 'Sales Taxable',
     customerName: 'Thermax Limited',
     customerLocation: 'DEFAULT ADDRESS',
-    customerAddress: 'D-13,-R.D.Age Road,MIDC,\nChinchwad-Pune-411019',
+    customerAddress: 'D-13 RD Aga Road MIDC,\nChinchwad Pune - 411019',
     customerGstNo: '27AAACT3910D1ZS',
     salesExecutive: '',
     remarks: '',
@@ -24,35 +24,146 @@ const SalesInvoice = () => {
     vehicleNo: 'MH14KG8157',
     vendorCode: '',
     crDays: 30,
-    dueDate: '2026-09-16',
-    grossTotal: 37350,
+    dueDate: '2026-11-09',
+    grossTotal: 9500,
     discount: 0,
     pf: 0,
     freight: 0,
     other: 0,
     igst: 0,
-    cgst: 3361.50,
-    sgst: 3361.50,
+    cgst: 855.00,
+    sgst: 855.00,
     roundOff: 0,
-    netTotal: 44073,
-    totalQty: 3
-  });
+    netTotal: 11210,
+    totalQty: 10,
+    items: [
+      {
+        itemDescription: 'Cutting Nozzle Messer ANME 3/64 (MS716123)',
+        unit: 'Nos',
+        partyCyl: 0,
+        ourCyl: 0,
+        capacity: 1.0,
+        qty: 10,
+        ratePer: 'Nos',
+        rate: 950,
+        amount: 9500,
+        remark: '',
+        hsn: '84689000'
+      }
+    ]
+  },
+  '192': {
+    salesAc: 'SALES ACCOUNT - MATERIAL',
+    invoiceNo: '192',
+    invoiceDate: '2026-10-10',
+    poNo: '5510891',
+    poDate: '2026-09-29',
+    chNo: '',
+    chDate: '',
+    invoiceType: 'REGULAR',
+    taxType: 'GST LOCAL',
+    gstType: 'Sales Taxable',
+    customerName: 'Thermax Limited',
+    customerLocation: 'DEFAULT ADDRESS',
+    customerAddress: 'D-13 RD Aga Road MIDC,\nChinchwad Pune - 411019',
+    customerGstNo: '27AAACT3910D1ZS',
+    salesExecutive: '',
+    remarks: '',
+    gdaNo: '',
+    vehicleNo: 'MH14KG8157',
+    vendorCode: '',
+    crDays: 30,
+    dueDate: '2026-11-09',
+    grossTotal: 12450,
+    discount: 0,
+    pf: 0,
+    freight: 0,
+    other: 0,
+    igst: 0,
+    cgst: 1120.50,
+    sgst: 1120.50,
+    roundOff: 0,
+    netTotal: 14691,
+    totalQty: 1,
+    items: [
+      {
+        itemDescription: 'Nitrogen SS single Stage Pressure Regulator.',
+        unit: 'Nos',
+        partyCyl: 0,
+        ourCyl: 0,
+        capacity: 1.0,
+        qty: 1,
+        ratePer: 'Nos',
+        rate: 12450,
+        amount: 12450,
+        remark: '',
+        hsn: '9032'
+      }
+    ]
+  },
+  '193': {
+    salesAc: 'SALES ACCOUNT - MATERIAL',
+    invoiceNo: '193',
+    invoiceDate: '2026-10-10',
+    poNo: '5510893',
+    poDate: '2026-09-29',
+    chNo: '',
+    chDate: '',
+    invoiceType: 'REGULAR',
+    taxType: 'GST LOCAL',
+    gstType: 'Sales Taxable',
+    customerName: 'Thermax Limited',
+    customerLocation: 'DEFAULT ADDRESS',
+    customerAddress: 'D-13 RD Aga Road MIDC,\nChinchwad Pune - 411019',
+    customerGstNo: '27AAACT3910D1ZS',
+    salesExecutive: '',
+    remarks: '',
+    gdaNo: '',
+    vehicleNo: 'MH14KG8157',
+    vendorCode: '',
+    crDays: 30,
+    dueDate: '2026-11-09',
+    grossTotal: 18750,
+    discount: 0,
+    pf: 0,
+    freight: 0,
+    other: 0,
+    igst: 0,
+    cgst: 1687.50,
+    sgst: 1687.50,
+    roundOff: 0,
+    netTotal: 22125,
+    totalQty: 1,
+    items: [
+      {
+        itemDescription: 'SS, Single stage Pressure Regulator CO2 Preheater and Rotatmeter',
+        unit: 'Nos',
+        partyCyl: 0,
+        ourCyl: 0,
+        capacity: 1.0,
+        qty: 1,
+        ratePer: 'Nos',
+        rate: 18750,
+        amount: 18750,
+        remark: '',
+        hsn: '9032'
+      }
+    ]
+  }
+};
 
-  const [items, setItems] = useState([
-    {
-      itemDescription: '',
-      unit: 'Nos',
-      partyCyl: 0,
-      ourCyl: 0,
-      capacity: 1.0,
-      qty: 0,
-      ratePer: 'Nos',
-      rate: 0,
-      amount: 0,
-      remark: '',
-      hsn: ''
+const SalesInvoice = () => {
+  const [formData, setFormData] = useState({ ...PREDEFINED_INVOICES['191'] });
+  const [items, setItems] = useState([...PREDEFINED_INVOICES['191'].items]);
+
+  const loadPredefinedInvoice = (num) => {
+    const inv = PREDEFINED_INVOICES[num];
+    if (inv) {
+      const { items: invItems, ...formFields } = inv;
+      setFormData({ ...formFields });
+      setItems([...invItems]);
     }
-  ]);
+  };
 
   const [customerOptions, setCustomerOptions] = useState([]);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -78,28 +189,12 @@ const SalesInvoice = () => {
 
       const invRes = await api.get('/sales-invoices');
       const invoices = invRes.data || [];
-      const inv133 = invoices.find(i => i.invoiceNo === '133');
-      const inv132 = invoices.find(i => i.invoiceNo === '132');
-      const inv131 = invoices.find(i => i.invoiceNo === '131');
-      const inv126 = invoices.find(i => i.invoiceNo === '126');
-      const targetInvoice = inv133 || inv132 || inv131 || inv126 || (invoices.length > 0 ? invoices[invoices.length - 1] : null);
+      const inv191 = invoices.find(i => i.invoiceNo === '191');
+      const targetInvoice = inv191;
 
       if (targetInvoice) {
         handleSelectInvoice(targetInvoice, loadedCustomers);
-      } else {
-        const techknow = loadedCustomers.find(c => c.name && c.name.includes('Techknowgreen'));
-        const defaultCust = techknow || loadedCustomers.find(c => c.name === 'Thermax Limited') || loadedCustomers[0];
-        if (defaultCust) {
-          setFormData(prev => ({
-            ...prev,
-            customerName: defaultCust.name,
-            customerAddress: defaultCust.address,
-            customerGstNo: defaultCust.gstNo,
-            vendorCode: defaultCust.vendorCode || ''
-          }));
-        }
       }
-
       const gdaRes = await api.get('/material-outward-gda');
       setGdaEntries(gdaRes.data || []);
     } catch (error) {
@@ -317,19 +412,33 @@ const SalesInvoice = () => {
       alert("Sales Invoice saved successfully!");
     } catch (error) {
       console.error("Error saving Sales Invoice:", error);
-      alert("Error saving data. Please check backend.");
+      const isNetworkErr = !error.response || error.code === 'ERR_NETWORK';
+      alert(isNetworkErr
+        ? "Network Error: Could not connect to backend server. If using Render free tier, the server may take ~50s to wake up, or your Backend URL is not set. Please click 'Server API' in the top bar to verify or configure the URL."
+        : "Error saving data. " + (error.response?.data?.message || error.message));
     }
   };
 
   const handleOpenViewModal = async () => {
+    let list = [];
     try {
       const res = await api.get('/sales-invoices');
-      setInvoicesList(res.data || []);
-      setIsViewModalOpen(true);
+      list = res.data || [];
     } catch (error) {
-      console.error("Error fetching invoices list:", error);
-      alert("Error fetching invoices list from backend.");
+      console.log("Using local invoices list:", error);
     }
+    const preList = Object.values(PREDEFINED_INVOICES).map(inv => ({
+      ...inv,
+      id: `pre-${inv.invoiceNo}`
+    }));
+    const merged = [...preList];
+    list.forEach(item => {
+      if (!merged.some(m => m.invoiceNo === item.invoiceNo)) {
+        merged.push(item);
+      }
+    });
+    setInvoicesList(merged);
+    setIsViewModalOpen(true);
   };
 
   const handleSelectInvoice = (invoice, customersList = customerOptions) => {
@@ -1013,10 +1122,29 @@ const SalesInvoice = () => {
   return (
     <div className="bg-[#e0e0e0] min-h-screen font-sans text-[11px] p-2 flex flex-col font-semibold">
       <div className="bg-[#f0f0f0] border border-gray-400 p-2 mb-1 shadow-sm">
-        <h2 className="text-[#000080] font-bold mb-2 flex items-center space-x-2 text-sm uppercase">
-          <span className="text-blue-600">📊</span>
-          <span>Sales Book - TAX INVOICE</span>
-        </h2>
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+          <h2 className="text-[#000080] font-bold flex items-center space-x-2 text-sm uppercase">
+            <span className="text-blue-600">📊</span>
+            <span>Sales Book - TAX INVOICE</span>
+          </h2>
+          <div className="flex items-center space-x-2">
+            <span className="text-gray-700 font-bold text-[11px]">Quick Load Invoice:</span>
+            {['191', '192', '193'].map(num => (
+              <button
+                key={num}
+                type="button"
+                onClick={() => loadPredefinedInvoice(num)}
+                className={`px-3 py-1 rounded text-[11px] font-bold transition shadow-sm cursor-pointer ${
+                  formData.invoiceNo === num
+                    ? 'bg-blue-700 text-white ring-2 ring-blue-400'
+                    : 'bg-white hover:bg-blue-50 text-blue-900 border border-blue-400'
+                }`}
+              >
+                Invoice #{num}
+              </button>
+            ))}
+          </div>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Left Panel */}

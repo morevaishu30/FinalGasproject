@@ -9,6 +9,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/financial-years")
+@CrossOrigin(origins = "*")
 public class FinancialYearController {
 
     @Autowired

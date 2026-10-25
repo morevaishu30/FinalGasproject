@@ -642,5 +642,55 @@ public class DataSeeder implements CommandLineRunner {
             salesInvoiceRepository.save(inv133);
             System.out.println("Invoice 133 (Techknowgreen / Transport charge) seeded successfully!");
         }
+
+        // ── Ensure Invoice 153 exists (Thermax Limited - SS, Single stage Pressure Regulator) ──
+        if (salesInvoiceRepository.findAll().stream().noneMatch(s -> "153".equals(s.getInvoiceNo()))) {
+            SalesInvoice inv153 = new SalesInvoice();
+            inv153.setSalesAc("SALES ACCOUNT - MATERIAL");
+            inv153.setInvoiceNo("153");
+            inv153.setInvoiceDate(LocalDate.of(2026, 9, 12));
+            inv153.setInvoiceType("REGULAR");
+            inv153.setTaxType("GST LOCAL");
+            inv153.setGstType("Sales Taxable");
+            inv153.setCustomerName("Thermax Limited");
+            inv153.setCustomerLocation("DEFAULT ADDRESS");
+            inv153.setCustomerAddress("D-13,-R.D.Age Road,MIDC,\nChinchwad-Pune-411019");
+            inv153.setCustomerGstNo("27AAACT3910D1ZS");
+            inv153.setVehicleNo("MH14KG8157");
+            inv153.setVendorCode("169197");
+            inv153.setPoNo("5510849");
+            inv153.setPoDate(LocalDate.of(2026, 9, 7));
+            inv153.setChNo("N/A");
+            inv153.setCrDays(30);
+            inv153.setDueDate(LocalDate.of(2026, 10, 12));
+            inv153.setGrossTotal(18750.0);
+            inv153.setDiscount(0.0);
+            inv153.setPf(0.0);
+            inv153.setFreight(0.0);
+            inv153.setOther(0.0);
+            inv153.setCgst(1687.50);
+            inv153.setSgst(1687.50);
+            inv153.setIgst(0.0);
+            inv153.setRoundOff(0.0);
+            inv153.setNetTotal(22125.0);
+            inv153.setTotalQty(1.0);
+            inv153.setFinancialYearId("2025-2026");
+
+            SalesInvoiceItem regItem = new SalesInvoiceItem();
+            regItem.setItemDescription("SS, Single stage Pressure Regulator - Inlet 0-280 Kg/cm2 , Outlet 0-16 Kg/cm2 , Set Pressure up to 10 Kg/cm2 ,Inlet Connection 5/8\" BSP Male Right, Outlet Connection 1/4\" Od , With Preheater and Rotatmeter With testing certificate and 1 year warranty support , Sr. No. marked on regulator body , Gauges SS Techno , Gas : Co2");
+            regItem.setUnit("01 Nos");
+            regItem.setQty(1.0);
+            regItem.setCapacity(1.0);
+            regItem.setOurCyl(0);
+            regItem.setPartyCyl(0);
+            regItem.setRatePer("Nos");
+            regItem.setRate(18750.0);
+            regItem.setAmount(18750.0);
+            regItem.setHsn("9032");
+            inv153.getItems().add(regItem);
+
+            salesInvoiceRepository.save(inv153);
+            System.out.println("Invoice 153 (Thermax Limited / SS Pressure Regulator) seeded successfully!");
+        }
     }
 }

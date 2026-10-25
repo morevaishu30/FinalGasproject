@@ -14,3 +14,7 @@ Thumbs.db
 .idea/
 .vscode/
 *.iml
+
+# Exports & Generated Files
+invoice_*.html
+*.pdf

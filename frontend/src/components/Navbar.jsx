@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { getApiBaseUrl } from "../api/axios";
 
 const menuData = [
   {
     name: "Administration Setup",
     children: [
-      { name: "Manage Financial Year", action: "changeFY" }
+      { name: "Manage Financial Year", action: "changeFY" },
+      { name: "Server / API Connection", action: "changeApiUrl" }
     ]
   },
   {
@@ -118,6 +120,9 @@ const MenuItem = ({ item, onAction, mobile }) => {
 
 const Navbar = ({ currentFY, onChangeFY, onLogout }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const isDeployed = typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1";
+  const currentUrl = getApiBaseUrl();
+  const hasLocalhostInProd = isDeployed && currentUrl.includes("localhost");
 
   return (
     <nav className="bg-gradient-to-r from-[#1e3a8a] to-[#2563eb] text-white shadow-xl relative z-50">
@@ -156,7 +161,20 @@ const Navbar = ({ currentFY, onChangeFY, onLogout }) => {
             </div>
           </div>
 
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden md:flex items-center space-x-3">
+            <div
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold border shadow-inner backdrop-blur-sm cursor-pointer transition flex items-center gap-1.5 ${
+                hasLocalhostInProd
+                  ? 'bg-amber-500/80 hover:bg-amber-500 text-white border-amber-300 animate-pulse'
+                  : 'bg-white/10 hover:bg-white/20 text-white border-white/20'
+              }`}
+              onClick={() => onChangeFY('changeApiUrl')}
+              title={hasLocalhostInProd ? "Backend URL not set for production! Click to configure." : "Backend Server API Settings"}
+            >
+              <span className={`w-2 h-2 rounded-full ${hasLocalhostInProd ? 'bg-red-400' : 'bg-green-400'}`}></span>
+              <span>{hasLocalhostInProd ? "⚠️ API Not Set" : "Server API"}</span>
+            </div>
+
             <div className="bg-white/10 px-4 py-1.5 rounded-full text-xs font-semibold border border-white/20 shadow-inner backdrop-blur-sm cursor-pointer hover:bg-white/20 transition" onClick={() => onChangeFY('changeFY')}>
               <span className="text-blue-200 mr-2">FY:</span>
               <span className="text-white">{currentFY || "Not Selected"}</span>
@@ -194,12 +212,20 @@ const Navbar = ({ currentFY, onChangeFY, onLogout }) => {
             <MenuItem key={idx} item={menu} onAction={onChangeFY} mobile={true} />
           ))}
         </div>
-        <div className="p-4 border-t border-white/10 flex justify-between items-center bg-blue-900/50">
-          <div className="bg-white/10 px-4 py-2 rounded-lg text-sm font-semibold border border-white/20 text-center" onClick={() => onChangeFY('changeFY')}>
+        <div className="p-4 border-t border-white/10 flex flex-wrap justify-between items-center gap-2 bg-blue-900/50">
+          <div
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold border cursor-pointer ${
+              hasLocalhostInProd ? 'bg-amber-500 text-white' : 'bg-white/10 text-white'
+            }`}
+            onClick={() => onChangeFY('changeApiUrl')}
+          >
+            {hasLocalhostInProd ? "⚠️ Set Backend API URL" : "Server API Settings"}
+          </div>
+          <div className="bg-white/10 px-3 py-1.5 rounded-lg text-xs font-semibold border border-white/20 text-center" onClick={() => onChangeFY('changeFY')}>
             <span className="text-blue-300">FY: </span>
             <span className="text-white">{currentFY || "Not Selected"}</span>
           </div>
-          <button onClick={onLogout} className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold transition">
+          <button onClick={onLogout} className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">
             Logout
           </button>
         </div>
