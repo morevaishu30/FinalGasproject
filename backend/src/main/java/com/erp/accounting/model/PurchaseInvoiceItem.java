@@ -11,6 +11,7 @@ public class PurchaseInvoiceItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(columnDefinition = "TEXT")
     private String itemDescription;
     private String unit;
     private Integer partyCyl;
